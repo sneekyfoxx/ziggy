@@ -1,2 +1,2 @@
-# zigget
-A Zig compiler installer and manager
+# ziggy: A Zig compiler installer and manager
+
