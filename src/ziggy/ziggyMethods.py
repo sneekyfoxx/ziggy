@@ -406,3 +406,10 @@ class ZiggyMethods:
                     continue
             STDERR(f'{RED}Version{RESET} \'{WHITE}{version}{RESET}\' {RED}isn\'t installed{RESET}\n')
             return 1
+
+    @classmethod
+    def ziggy_version(cls, /) -> int:
+        """ Display the current 'ziggy' version.
+        """
+        STDOUT(f'{GREEN}ziggy-v1.0{RESET}')
+        return 0
