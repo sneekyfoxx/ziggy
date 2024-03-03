@@ -250,6 +250,7 @@ class ZiggyMethods:
         STDOUT(f"\n {PURPLE}upgrade{RESET}            {WHITE}upgrade the primary compiler to 'master'{RESET}\n")
         STDOUT(f"\n {PURPLE}destroy{RESET}            {WHITE}destroy the primary or a specific compiler version{RESET}")
         STDOUT(f"\n   {BLUE}VERSION            major.minor.patch (default 'primary'){RESET}\n")
+        STDOUT(f"\n {PURPLE}version{RESET}            {WHITE}display the current ziggy version and exit{RESET}\n")
         return 0
 
     @classmethod
