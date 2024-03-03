@@ -3,11 +3,13 @@
     supported by Zig.
 """
 
-def ziggy_confirm(system: str, arch: str, /) -> bool:
+from . import SYSTEM, MACHINE
+
+def ziggy_confirm() -> bool:
     """ Confirm if the current operating system
         and architecture is supported by Zig.
     """
-    match (system, arch):
+    match (SYSTEM(), MACHINE()):
         case ('Windows', 'x86'): return True
         case ('Windows', 'x86_64'): return True
         case ('Windows', 'aarch64'): return True
