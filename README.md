@@ -4,9 +4,9 @@
 
 ## Requirements
 
-**ziggy** requires ***requests*** and ***BeautifulSoup4***. To install the requirements follow the steps below:
+**ziggy** require the ***requests*** and ***BeautifulSoup4*** packages. To install the requirements follow the steps below:
 
-<details>
+<details open>
 <summary><strong>Unix</strong></summary>
 
 On some systems you may have to use your package manager to install the Python **virtualenv** package.
@@ -19,7 +19,7 @@ deactivate
 ```
 </details>
 
-<details>
+<details open>
 <summary><strong>Windows</strong></summary>
 
 ``` powershell
@@ -32,14 +32,14 @@ C:\> ziggy_env\Scripts\activate.bat
 # powershell
 C:\> ziggy_env\bin\activate.ps1    # or PS C:\>ziggy_env\Scripts\Activate.ps1
 
-pip install -r < curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/testing/requirments.txt
+pip install -r < curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/testing/requirements.txt
 deactivate
 ```
 </details>
 
 ## ziggy Usage
 
-<details open>
+<details>
 <summary><strong>Options</strong></summary>
 
 ```bash
