@@ -18,7 +18,6 @@ from . import (
         SYSTEM,
         MACHINE,
         RUN,
-        FIND,
         REQUEST,
         REQ_ERROR,
         SCRAPER

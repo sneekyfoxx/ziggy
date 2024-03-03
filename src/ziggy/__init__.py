@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 import platform
 import subprocess
-from re import findall
 
 RED = "\x1b[1;31m"
 GREEN = "\x1b[1;32m"
@@ -32,8 +31,6 @@ SYSTEM = platform.system
 MACHINE = platform.machine
 
 RUN = subprocess.run
-
-FIND = findall
 
 try:
     from requests import request
