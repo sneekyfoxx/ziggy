@@ -19,6 +19,7 @@ def ziggy_options(count: int, /, *options) -> int:
                 case 'install': return Methods.ziggy_install()
                 case 'upgrade': return Methods.ziggy_upgrade()
                 case 'destroy': return Methods.ziggy_destroy()
+                case 'version': return Methods.ziggy_version()
                 case _: return Methods.ziggy_emitter(f"'{WHITE}{options[0]}{RESET}' {RED}is invalid{RESET}\n")
         case 2:
             match options[0]:
