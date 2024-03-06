@@ -2,6 +2,10 @@
     common ziggy operations.
 """
 
+# Use lookup table for easier version control
+# Reimplement install, primary, upgrade, and destroy
+# Update changed names
+
 from . import (
         RED,
         GREEN,
@@ -30,30 +34,28 @@ class ZiggyMethods:
     PLATFORM = SYSTEM().lower()
     PROCESSOR = MACHINE()
     BASE_URL = "https://ziglang.org/download"
+    DEV_URL = "https://ziglang.org/builds"
     HOME = EXPANDUSER('~')
     ZIGGY_DIR = ''
     ZIG_LINK = ''
+    SEP = ''
+    DEV_NULL = ''
+    TAR_CMD = ''
+    LINK_CMD = ''
+    UNLINK_CMD = ''
+    RM_CMD = ''
     VERSIONS = [
             '0.1.0', '0.2.0', '0.3.0', '0.4.0', '0.5.0', '0.6.0', '0.7.0', '0.7.1',
             '0.8.0', '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0'
             ]
-    VMAP = dict({
-        'windows-x86': list(),
-        'windows-x86_64': list(),
-        'windows-aarch64': list(),
-        'darwin-x86_64': list(),
-        'darwin-aarch64': list(),
-        'linux-x86': list(),
-        'linux-x86_64': list(),
-        'linux-aarch64': list(),
-        'linux-armv6kz': list(),
-        'linux-armv7a': list(),
-        'linux-riscv64': list(),
-        'linux-powerpc64le': list(),
-        'linux-powerpc': list(),
-        'freebsd-x86_64': list()
-        })
-    VMAP_KEY = f'{PLATFORM}-{PROCESSOR}'
+    DEV_VERSION = '0.12.0'
+    EXTENSION = ''
+    WINDOWS = ''
+    MACOS = ''
+    LINUX = ''
+    FREEBSD = ''
+    LATEST = ''
+    AVAILABLE = list()
 
     def __new__(cls, /) -> object:
         """ Return a new 'signleton' object.
@@ -62,11 +64,26 @@ class ZiggyMethods:
         if cls.PLATFORM == 'windows':
             cls.ZIGGY_DIR = f'{cls.HOME}\\.ziggy'
             cls.ZIG_LINK = 'c:\\Windows\\system32\\zig'
+            cls.SEP = "\\"
+            cls.EXTENSION = '.zip'
+            cls.DEV_NULL = '2 > nul'
+            cls.TAR_CMD = 'tar -xf'
+            cls.LINK_CMD = 'mklink'
+            cls.UNLINK_CMD = 'del'
+            cls.RM_CMD = 'rmdir'
             if not EXISTS(cls.ZIGGY_DIR):
                 RUN(f'mkdir {cls.ZIGGY_DIR} 2> nul', shell=True)
+        
         elif cls.PLATFORM in ['darwin', 'linux', 'freebsd']:
             cls.ZIGGY_DIR = f'{cls.HOME}/.ziggy'
             cls.ZIG_LINK = '/usr/bin/zig'
+            cls.SEP = "/"
+            cls.EXTENSION = '.tar.xz'
+            cls.DEV_NULL = '2>/dev/null'
+            cls.TAR_CMD = 'tar xJf'
+            cls.LINK_CMD = 'sudo ln -s'
+            cls.UNLINK_CMD = 'sudo unlink'
+            cls.RM_CMD = 'rm -r --interactive=never'
             if not EXISTS(cls.ZIGGY_DIR):
                 RUN(f'mkdir {cls.ZIGGY_DIR} 2>/dev/null', shell=True)
 
@@ -80,7 +97,7 @@ class ZiggyMethods:
         """
         if cls.PLATFORM == 'windows' and not EXISTS(f'{cls.HOME}\\.ziggy'):
             RUN(f'mkdir {cls.HOME}\\.ziggy 2> nul', shell=True)
-        if cls.PLATFORM in ['darwin', 'linux', 'freebsd'] and not EXISTS(f'{cls.HOME}/.ziggy'):
+        elif cls.PLATFORM in ['darwin', 'linux', 'freebsd'] and not EXISTS(f'{cls.HOME}/.ziggy'):
             RUN(f'mkdir {cls.HOME}/.ziggy 2>/dev/null', shell=True)
         return None
 
@@ -92,9 +109,9 @@ class ZiggyMethods:
         return 1
 
     @classmethod
-    def ziggy_collect(cls, /) -> int:
-        """ Send a 'GET' request to 'ziglang.org' and
-            collect the URL's for each compiler version.
+    def ziggy_windows_collect(cls, /) -> int:
+        """ Collect Zig compiler versions for the current
+            Windows platform and architecture.
         """
         try:
             request = REQUEST('GET', cls.BASE_URL)
@@ -110,127 +127,202 @@ class ZiggyMethods:
                     target = string.decode().replace('<a href=', '')
                     target = target.replace('"', '')
                     target = target.split('>')[0]
+                    target = target.split('/')[-1]
+                    target = target.replace('.zip', '')
 
-                    if target.endswith('.zip'):
-                        if 'win64' in target or 'windows-x86_64' in target:
-                            cls.VMAP['windows-x86_64'].append(target)
-                        elif 'windows-i386' in target or 'windows-x86' in target:
-                            cls.VMAP['windows-x86'].append(target)
-                        elif 'windows-aarch64' in target:
-                            cls.VMAP['windows-aarch64'].append(target)
-                        else:
-                            continue
-                    elif target.endswith('.xz'):
-                        if 'macos-x86_64-' in target:
-                            cls.VMAP['darwin-x86_64'].append(target)
-                        elif 'macos-aarch64-' in target:
-                            cls.VMAP['darwin-aarch64'].append(target)
-                        elif 'linux-i386-' in target or 'linux-x86-' in target:
-                            cls.VMAP['linux-x86'].append(target)
-                        elif 'linux-x86_64-' in target:
-                            cls.VMAP['linux-x86_64'].append(target)
-                        elif 'linux-aarch64-' in target:
-                            cls.VMAP['linux-aarch64'].append(target)
-                        elif 'linux-armv6kz-' in target:
-                            cls.VMAP['linux-armv6kz'].append(target)
-                        elif 'linux-armv7a-' in target:
-                            cls.VMAP['linux-armv7a'].append(target)
-                        elif 'linux-riscv64-' in target:
-                            cls.VMAP['linux-riscv64'].append(target)
-                        elif 'linux-powerpc64le-' in target:
-                            cls.VMAP['linux-powerpc64le'].append(target)
-                        elif 'linux-powerpc-' in target:
-                            cls.VMAP['linux-powerpc'].append(target)
-                        elif 'freebsd-x86_64-' in target:
-                            cls.VMAP['freebsd-x86_64'].append(target)
-                        else:
-                            continue
-                    else:
+                    if target.endswith('minisig'):
                         continue
-                return 0
+
+                    if f'-{cls.PLATFORM}-{cls.PROCESSOR}-{cls.DEV_VERSION}-dev' in target:
+                        cls.LATEST = target
+
+                    match cls.PROCESSOR:
+                        case 'x86':
+                            if f'-{cls.PLATFORM}-i386-' in target or f'-{cls.PLATFORM}-x86-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'x86_64':
+                            if f'-win64-' in target or f'-{cls.PLATFORM}-x86_64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'aarch64':
+                            if f'-{cls.PLATFORM}-aarch64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case _:
+                            continue
+            else:
+                STDOUT(f"{WHITE}[{request.status_code}]{RESET} {RED}Request Failed.{RESET}\n")
+                return 1
+        return 0
+
+    @classmethod
+    def ziggy_macos_collect(cls, /) -> int:
+        """ Collect Zig compiler versions for the current
+            MacOS platform and architecture.
+        """
+        try:
+            request = REQUEST('GET', cls.BASE_URL)
+        except REQ_ERROR:
+            STDOUT(f"{RED}Failed To Connect To Server.{RESET}\n")
+            return 1
+        else:
+            if request.status_code == 200:
+                scraped = SCRAPER(request.content, 'html.parser')
+                request.close()
+
+                for string in scraped.findAll('a'):
+                    target = string.decode().replace('<a href=', '')
+                    target = target.replace('"', '')
+                    target = target.split('>')[0]
+                    target = target.split('/')[-1]
+                    target = target.replace('.tar.xz', '')
+
+                    if target.endswith('minisig'):
+                        continue
+
+                    if f'-{cls.PLATFORM}-{cls.PROCESSOR}-{cls.DEV_VERSION}-dev' in target:
+                        cls.LATEST = target
+
+                    match cls.PROCESSOR:
+                        case 'x86_64':
+                            if f'-{cls.PLATFORM}-x86_64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'aarch64':
+                            if f'-{cls.PLATFORM}-aarch64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case _:
+                            continue
+            else:
+                STDOUT(f"{WHITE}[{request.status_code}]{RESET} {RED}Request Failed.{RESET}\n")
+                return 1
+        return 0
+
+    @classmethod
+    def ziggy_linux_collect(cls, /) -> int:
+        """ Collect Zig compiler versions for the current
+            Linux platform and architecture.
+        """
+        try:
+            request = REQUEST('GET', cls.BASE_URL)
+        except REQ_ERROR:
+            STDOUT(f"{RED}Failed To Connect To Server.{RESET}\n")
+            return 1
+        else:
+            if request.status_code == 200:
+                scraped = SCRAPER(request.content, 'html.parser')
+                request.close()
+
+                for string in scraped.findAll('a'):
+                    target = string.decode().replace('<a href=', '')
+                    target = target.replace('"', '')
+                    target = target.split('>')[0]
+                    target = target.split('/')[-1]
+                    target = target.replace('.tar.xz', '')
+
+                    if target.endswith('minisig'):
+                        continue
+
+                    if f'-{cls.PLATFORM}-{cls.PROCESSOR}-{cls.DEV_VERSION}-dev' in target:
+                        cls.LATEST = target
+
+                    match cls.PROCESSOR:
+                        case 'x86':
+                            if f'-{cls.PLATFORM}-i386-' in target or f'-{cls.PLATFORM}-x86-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'x86_64':
+                            if f'-{cls.PLATFORM}-x86_64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'aarch64':
+                            if f'-{cls.PLATFORM}-aarch64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'armv6kz':
+                            if f'-{cls.PLATFORM}-armv6kz-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'armv7a':
+                            if f'-{cls.PLATFORM}-armv7a-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'riscv64':
+                            if f'-{cls.PLATFORM}-riscv64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'powerpc64le':
+                            if f'-{cls.PLATFORM}-powerpc64le-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case 'powerpc':
+                            if f'-{cls.PLATFORM}-powerpc-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case _:
+                            continue
+            else:
+                STDOUT(f"{WHITE}[{request.status_code}]{RESET} {RED}Request Failed.{RESET}\n")
+                return 1
+        return 0
+
+    @classmethod
+    def ziggy_freebsd_collect(cls, /) -> int:
+        """ Collect Zig compiler versions for the current
+            FreeBSD platform and architecture.
+        """
+        try:
+            request = REQUEST('GET', cls.BASE_URL)
+        except REQ_ERROR:
+            STDOUT(f"{RED}Failed To Connect To Server.{RESET}\n")
+            return 1
+        else:
+            if request.status_code == 200:
+                scraped = SCRAPER(request.content, 'html.parser')
+                request.close()
+
+                for string in scraped.findAll('a'):
+                    target = string.decode().replace('<a href=', '')
+                    target = target.replace('"', '')
+                    target = target.split('>')[0]
+                    target = target.split('/')[-1]
+                    target = target.replace('.tar.xz', '')
+
+                    if target.endswith('minisig'):
+                        continue
+
+                    if f'-{cls.PLATFORM}-{cls.PROCESSOR}-{cls.DEV_VERSION}-dev' in target:
+                        cls.LATEST = target
+
+                    match cls.PROCESSOR:
+                        case 'x86_64':
+                            if f'-{cls.PLATFORM}-x86_64-' in target:
+                                cls.AVAILABLE.insert(0, target)
+                        case _:
+                            continue
             else:
                 STDOUT(f"{WHITE}[{request.status_code}]{RESET} {RED}Request Failed.{RESET}\n")
                 return 1
 
     @classmethod
-    def ziggy_get_target(cls, version: str, /) -> str:
+    def ziggy_populate(cls, /) -> int:
+        """ Invoke the appropriate method for the current
+            platform and architecture to populate the
+            class variable 'AVAILABLE' list with all of
+            the Zig compiler versions that support the
+            current platform and architecture.
+        """
+        match cls.PLATFORM:
+            case 'windows': return cls.ziggy_windows_collect()
+            case 'darwin': return cls.ziggy_macos_collect()
+            case 'linux': return cls.ziggy_linux_collect()
+            case 'freebsd': return cls.ziggy_freebsd_collect()
+            case _: return 1
+
+    @classmethod
+    def ziggy_get_target(cls, version: str, /) -> str | int:
         """ Get the target archive url containing the
             given version.
         """
-        archives = cls.VMAP[cls.VMAP_KEY]
-
-        for available in archives:
-            if cls.PLATFORM == 'windows' and cls.PROCESSOR == 'x86_64':
-                if version in ['0.1.0', '0.2.0'] and 'win64' in available:
-                    return available
-                elif version in available:
-                    return available
-            elif cls.PLATFORM == 'windows' and cls.PROCESSOR == 'x86':
-                if version in ['0.6.0', '0.7.0', '0.7.1', '0.8.0', '0.8.1', '0.9.0', '0.9.1'] and 'i386' in available:
-                    return available
-            elif cls.PLATFORM == 'windows' and version in available:
-                return available
-            elif cls.PLATFORM == 'linux' and cls.PROCESSOR == 'x86':
-                if version not in ['0.11.0', '0.12.0'] and 'i386' in available:
-                    return available
-            elif cls.PLATFORM == 'linux' and version in available:
-                return available
-            elif version in available:
-                return available
-            else:
-                continue
-        return ""
-
-    @classmethod
-    def ziggy_install_zig_windows(cls, version: str, /) -> int:
-        """ Handle Zig compiler installation for Windows.
-        """
-        target_url = cls.ziggy_get_target(version)
-        if target_url == '':
-            STDERR(f"'{WHITE}{version}{RESET}' {RED}is not a known or valid version for your platform.{RESET}\n")
+        if version not in cls.VERSIONS:
             return 1
+        elif cls.ziggy_populate() == 0:
+            for available in cls.AVAILABLE:
+                if version in available:
+                    return available
+                else:
+                    continue
         else:
-            zig_archive = target_url.split('/')[-1]
-            zig_dir = zig_archive.replace('.zip', '')
-            request = REQUEST('GET', target_url)
-
-            if request.status_code == 200:
-                with open(zig_archive, 'wb') as archive:
-                    archive.write(request.content)
-                    request.close()
-                RUN(f'mv .\\{zig_archive} {cls.ZIGGY_DIR}\\{zig_archive}', shell=True)
-                RUN(f'cd {cls.ZIGGY_DIR} && tar xJf {zig_archive} && rm {zig_archive}', shell=True)
-                STDOUT(f'{GREEN}Install Complete!{RESET}\n')
-                return 0
-            else:
-                STDERR(f'{RED}Install Failed!{RESET}\n')
-                return 1
-
-    @classmethod
-    def ziggy_install_zig_unix(cls, version: str, /) -> int:
-        """ Handle Zig compiler installation for Unix
-            based platforms.
-        """
-        target_url = cls.ziggy_get_target(version)
-        if target_url == '':
-            STDERR(f"'{WHITE}{version}{RESET}' {RED}is not a known or valid version for your platform.{RESET}\n")
-            return 1
-        else:
-            zig_archive = target_url.split('/')[-1]
-            zig_dir = zig_archive.replace('.tar.xz', '')
-            request = REQUEST('GET', target_url)
-
-            if request.status_code == 200:
-                with open(zig_archive, 'wb') as archive:
-                    archive.write(request.content)
-                    request.close()
-                RUN(f'mv ./{zig_archive} {cls.ZIGGY_DIR}/{zig_archive} 2>/dev/null', shell=True)
-                RUN(f'cd {cls.ZIGGY_DIR} && tar xJf {zig_archive} && rm {zig_archive} 2>/dev/null', shell=True)
-                STDOUT(f'{GREEN}Install Complete!{RESET}\n')
-                return 0
-            else:
-                STDERR(f'{WHITE}[{request.status_code}]{RESET} {RED}Install Failed!{RESET}\n')
-                return 1
+            return ""
 
     @classmethod
     def ziggy_help(cls, /) -> int:
@@ -259,21 +351,18 @@ class ZiggyMethods:
             on the system or the Zig compiler versions
             supported for the current platform and architecture.
         """
-        if cls.ziggy_collect() == 1:
-            STDOUT(f"{RED}Request Failed.{RESET}\n")
+        if cls.ziggy_populate() == 1:
+            STDOUT(f"{RED}Request Failed. Couldn't populate version list.{RESET}\n")
             return 1
         else:
             if option == 'supported':
-                versions = cls.VMAP[cls.VMAP_KEY]
-                for version in versions:
-                    version = version.split('/')[-1] if cls.PLATFORM != 'windows' else version.split('\\')[-1]
-                    version = version.replace('.tar.xz', '') if cls.PLATFORM != 'windows' else version.replace('.zip', '')
+                for version in cls.AVAILABLE:
                     STDOUT(f'{WHITE}->{RESET} {GREEN}{version}{RESET}\n')
                 return 0
             elif option == 'installed':
                 versions = [version.name for version in PATH(cls.ZIGGY_DIR).iterdir()]
                 for version in versions:
-                    version = version.split('/')[-1] if cls.PLATFORM != 'windows' else version.split('\\')[-1]
+                    version = version.split(cls.SEP)[-1]
                     STDOUT(f'{WHITE}->{RESET} {GREEN}{version}{RESET}\n')
                 return 0
             else:
@@ -285,7 +374,18 @@ class ZiggyMethods:
         """ Show the primary Zig compiler in use or
             set the primary Zig compiler.
         """
-        if version != '' and version not in cls.VERSIONS:
+        status = cls.ziggy_populate()
+        supported = False
+        if status == 1:
+            STDERR(f'{RED}Couldn\'t populate version list.\n')
+            return 1
+
+        for available in cls.AVAILABLE:
+            if version in available:
+                supported = True
+                break
+
+        if supported is False:
             STDERR(f'\'{WHITE}{version}{RESET}\' {RED}isn\'t a valid Zig compiler version{RESET}\n')
             return 1
         else:
@@ -304,30 +404,33 @@ class ZiggyMethods:
                 linked = 1
                 primary = ''
                 if has_ziggy:
+                    set_this = ''
                     for entry in SCANDIR(cls.ZIGGY_DIR):
                         if entry.is_dir(follow_symlinks=False) and version in entry.name:
-                            if cls.PLATFORM == 'windows':
-                                make_link_win = f'mklink {cls.ZIGGY_DIR}\\{entry.name}\\zig {cls.ZIG_LINK} 2> nul'
+                            if version == '0.12.0' and entry.name == cls.LATEST:
+                                link_zig = f'{cls.LINK_CMD} {cls.ZIGGY_DIR}{cls.SEP}{entry.name}{cls.SEP}zig {cls.ZIG_LINK} {cls.DEV_NULL}'
                                 if zig_linked:
-                                    RUN(f'del {cls.ZIG_LINK} 2> nul', shell=True)
-                                    linked = RUN(make_link_win, shell=True).returncode
+                                    RUN(f'{cls.UNLINK_CMD} {cls.ZIG_LINK} {cls.DEV_NULL}', shell=True)
+                                    linked = RUN(link_zig, shell=True).returncode
                                     primary = entry.name
                                     break
                                 else:
-                                    linked = RUN(make_link_win, shell=True).returncode
+                                    linked = RUN(link_zig, shell=True).returncode
+                                    primary = entry.name
+                                    break
+                            elif version != '0.12.0':
+                                link_zig = f'{cls.LINK_CMD} {cls.ZIGGY_DIR}{cls.SEP}{entry.name}{cls.SEP}zig {cls.ZIG_LINK} {cls.DEV_NULL}'
+                                if zig_linked:
+                                    RUN(f'{cls.UNLINK_CMD} {cls.ZIG_LINK} {cls.DEV_NULL}', shell=True)
+                                    linked = RUN(link_zig, shell=True).returncode
+                                    primary = entry.name
+                                    break
+                                else:
+                                    linked = RUN(link_zig, shell=True).returncode
                                     primary = entry.name
                                     break
                             else:
-                                make_link_unix = f'sudo ln -s {cls.ZIGGY_DIR}/{entry.name}/zig {cls.ZIG_LINK} 2>/dev/null'
-                                if zig_linked:
-                                    RUN(f'sudo unlink {cls.ZIG_LINK} 2>/dev/null', shell=True)
-                                    linked = RUN(make_link_unix, shell=True).returncode
-                                    primary = entry.name
-                                    break
-                                else:
-                                    linked = RUN(make_link_unix, shell=True).returncode
-                                    primary = entry.name
-                                    break
+                                continue
                         else:
                             continue
 
@@ -346,19 +449,40 @@ class ZiggyMethods:
         """ Install the Zig compiler containing the specified version.
             Install the latest Zig compiler if no version is specified.
         """
-        if version not in cls.VERSIONS:
-            STDERR(f"'{WHITE}{version}{RESET}' {RED}is not a known or valid Zig compiler version.{RESET}\n")
+        target = cls.ziggy_get_target(version)
+        if target == 1:
+            STDERR(f"'{WHITE}{version}{RESET}' {RED}isn't a valid Zig compiler version.{RESET}\n")
+            return 1
+        elif target is None:
+            STDERR(f"'{WHITE}{version}{RESET}' {RED}is not a valid version for your platform.{RESET}\n")
             return 1
         else:
-            cls.ziggy_ensure_ziggy()
-            status = cls.ziggy_collect()
-            if status == 1:
-                return status
+            url = ''
+            if version == '0.12.0':
+                url = f'{cls.DEV_URL}/{cls.LATEST}{cls.EXTENSION}'
+                for installed in SCANDIR(cls.ZIGGY_DIR):
+                    if installed.is_dir(follow_symlinks=False) and version in installed.name:
+                        RUN(f'{cls.RM_CMD} {installed.name} {cls.DEV_NULL}', shell=True)
             else:
-                if cls.PLATFORM == 'windows':
-                    return cls.ziggy_install_zig_windows(version)
-                else:
-                    return cls.ziggy_install_zig_unix(version)
+                for available in cls.AVAILABLE:
+                    if version in available:
+                        url = f'{cls.BASE_URL}/{version}/{available}{cls.EXTENSION}'
+                        break
+
+            request = REQUEST('GET', url)
+            zig_archive = target + cls.EXTENSION
+
+            if request.status_code == 200:
+                with open(zig_archive, 'wb') as archive:
+                    archive.write(request.content)
+                    request.close()
+                    RUN(f'mv .{cls.SEP}{zig_archive} {cls.ZIGGY_DIR}{cls.SEP}{zig_archive}', shell=True)
+                    RUN(f'cd {cls.ZIGGY_DIR} && {cls.TAR_CMD} {zig_archive} && {cls.RM_CMD} {zig_archive}', shell=True)
+                    STDOUT(f'{GREEN}Install Complete!{RESET}\n')
+                    return 0
+            else:
+                STDERR(f'{RED}Install Failed!{RESET}\n')
+                return 1
 
 
     @classmethod
@@ -366,50 +490,61 @@ class ZiggyMethods:
         """ Upgrade the primary Zig compiler to the
             latest Zig compiler version if not installed.
         """
-        latest = '0.12.0'
-        installed = False
-        for version in PATH(cls.ZIGGY_DIR).iterdir():
-            if latest in version.name:
-                installed = True
-                STDOUT(f'{GREEN}The latest Zig compiler is already installed{RESET}\n')
-                break
-            else:
-                continue
-        if installed:
-            return 0
+        status = cls.ziggy_populate()
+
+        if status == 1:
+            return 1
         else:
-            cls.ziggy_install(latest)
-            return 0
+            installed = False
+            for version in PATH(cls.ZIGGY_DIR).iterdir():
+                version = version.name.split(cls.SEP)[-1]
+                if version == cls.LATEST:
+                    installed = True
+                    STDOUT(f'{GREEN}The latest Zig compiler is already installed{RESET}\n')
+                    break
+                else:
+                    continue
+            
+            if installed:
+                return 0
+            else:
+                cls.ziggy_install('0.12.0')
+                return 0
 
     @classmethod
     def ziggy_destroy(cls, version: str = "", /) -> int:
         """ Destroy / remove a compiler of choice if the
             specified version is installed.
         """
+        if cls.ziggy_populate() == 1:
+            return 1
+
         if version not in cls.VERSIONS:
             STDERR(f'\'{WHITE}{version}{RESET}\' {RED}isn\'t a valid Zig compiler version{RESET}\n')
             return 1
         else:
-            for versions in PATH(cls.ZIGGY_DIR).iterdir():
-                versions = versions.name.split('/')[-1] if cls.PLATFORM != 'windows' else versions.name.split('\\')[-1]
-                if cls.PLATFORM == 'windows' and version in versions:
-                    RUN(f'rmdir /s /q {cls.ZIGGY_DIR}\\{versions} 2> nul', shell=True)
-                    RUN(f'del {cls.ZIG_LINK} 2> nul', shell=True)
-                    STDOUT(f'{GREEN}Destroyed{RESET} \'{WHITE}{versions}{RESET}\'')
-                    return 0
-                elif version in versions:
-                    RUN(f'rm -r --interactive=never {cls.ZIGGY_DIR}/{versions} 2>/dev/null', shell=True)
-                    RUN(f'sudo unlink {cls.ZIG_LINK} 2>/dev/null', shell=True)
-                    STDOUT(f'{GREEN}Destroyed{RESET} \'{WHITE}{versions}{RESET}\'')
-                    return 0
+            primary = ''
+            destroyed = False
+            for installed in PATH(cls.ZIGGY_DIR).iterdir():
+                installed = installed.name.split(cls.SEP)[-1]
+                if PATH(cls.ZIG_LINK).is_symlink():
+                    primary = PATH(cls.ZIG_LINK).resolve().parent.name
+
+                if version in installed and version != primary:
+                    status = RUN(f'{cls.RM_CMD} {cls.ZIGGY_DIR}{cls.SEP}{installed} {cls.DEV_NULL}', shell=True)
+                    STDOUT(f'{GREEN}Destroyed{RESET} \'{WHITE}{installed}{RESET}\'\n')
+                    if status.returncode == 0:
+                        destroyed = True
                 else:
                     continue
-            STDERR(f'{RED}Version{RESET} \'{WHITE}{version}{RESET}\' {RED}isn\'t installed{RESET}\n')
-            return 1
+            if destroyed is False:
+                STDERR(f'{RED}Version{RESET} \'{WHITE}{version}{RESET}\' {RED}isn\'t installed{RESET}\n')
+                return 1
+        return 0
 
     @classmethod
     def ziggy_version(cls, /) -> int:
         """ Display the current 'ziggy' version.
         """
-        STDOUT(f'{GREEN}ziggy-v1.0{RESET}')
+        STDOUT(f'{GREEN}ziggy-v1.0{RESET}\n')
         return 0
