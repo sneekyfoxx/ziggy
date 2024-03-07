@@ -67,8 +67,8 @@ class ZiggyMethods:
             cls.SEP = "\\"
             cls.EXTENSION = '.zip'
             cls.DEV_NULL = '2 > nul'
-            cls.TAR_CMD = 'tar -xf'
-            cls.LINK_CMD = 'mklink'
+            cls.TAR_CMD = 'unzip'
+            cls.LINK_CMD = f'mklink'
             cls.UNLINK_CMD = 'del'
             cls.RM_CMD = 'rmdir'
             if not EXISTS(cls.ZIGGY_DIR):
