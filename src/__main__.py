@@ -3,7 +3,7 @@
     of the appropriate modules, and invoking all
     of the appropriate functions, classes, and methods.
 """
-from ziggy import STDERR, ARGV, EXIT
+from ziggy import RED, RESET, STDERR, ARGV, EXIT
 from ziggy.ziggyOptions import ziggy_options
 from ziggy.ziggyConfirm import ziggy_confirm
 
