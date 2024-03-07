@@ -140,7 +140,7 @@ class ZiggyMethods:
                         case 'x86':
                             if f'-{cls.PLATFORM}-i386-' in target or f'-{cls.PLATFORM}-x86-' in target:
                                 cls.AVAILABLE.insert(0, target)
-                        case 'x86_64':
+                        case 'AMD64':
                             if f'-win64-' in target or f'-{cls.PLATFORM}-x86_64-' in target:
                                 cls.AVAILABLE.insert(0, target)
                         case 'aarch64':
