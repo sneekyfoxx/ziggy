@@ -44,6 +44,7 @@ class ZiggyMethods:
     LINK_CMD = ''
     UNLINK_CMD = ''
     RM_CMD = ''
+    MV_CMD = ''
     VERSIONS = [
             '0.1.0', '0.2.0', '0.3.0', '0.4.0', '0.5.0', '0.6.0', '0.7.0', '0.7.1',
             '0.8.0', '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0'
@@ -63,7 +64,7 @@ class ZiggyMethods:
         cls.instance = None
         if cls.PLATFORM == 'windows':
             cls.ZIGGY_DIR = f'{cls.HOME}\\.ziggy'
-            cls.ZIG_LINK = 'c:\\Windows\\system32\\zig'
+            cls.ZIG_LINK = 'c:\\Windows\\System32\\zig'
             cls.SEP = "\\"
             cls.EXTENSION = '.zip'
             cls.DEV_NULL = '2 > nul'
@@ -71,6 +72,7 @@ class ZiggyMethods:
             cls.LINK_CMD = f'mklink'
             cls.UNLINK_CMD = 'del'
             cls.RM_CMD = 'rmdir'
+            cls.MV_CMD = 'move'
             if not EXISTS(cls.ZIGGY_DIR):
                 RUN(f'mkdir {cls.ZIGGY_DIR} 2> nul', shell=True)
         
@@ -84,6 +86,7 @@ class ZiggyMethods:
             cls.LINK_CMD = 'sudo ln -s'
             cls.UNLINK_CMD = 'sudo unlink'
             cls.RM_CMD = 'rm -r --interactive=never'
+            cls.MV_CMD = 'mv'
             if not EXISTS(cls.ZIGGY_DIR):
                 RUN(f'mkdir {cls.ZIGGY_DIR} 2>/dev/null', shell=True)
 
@@ -476,7 +479,7 @@ class ZiggyMethods:
                 with open(zig_archive, 'wb') as archive:
                     archive.write(request.content)
                     request.close()
-                    RUN(f'mv .{cls.SEP}{zig_archive} {cls.ZIGGY_DIR}{cls.SEP}{zig_archive}', shell=True)
+                    RUN(f'{cls.MV_CMD} .{cls.SEP}{zig_archive} {cls.ZIGGY_DIR}{cls.SEP}{zig_archive}', shell=True)
                     RUN(f'cd {cls.ZIGGY_DIR} && {cls.TAR_CMD} {zig_archive} && {cls.RM_CMD} {zig_archive}', shell=True)
                     STDOUT(f'{GREEN}Install Complete!{RESET}\n')
                     return 0

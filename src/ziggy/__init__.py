@@ -5,6 +5,7 @@
 
 import os
 import sys
+from os.path import exists, expanduser
 from pathlib import Path
 import platform
 import subprocess
@@ -16,8 +17,8 @@ PURPLE = "\x1b[1;35m"
 WHITE = "\x1b[1;37m"
 RESET = "\x1b[0m"
 
-EXISTS = os.path.exists
-EXPANDUSER = os.path.expanduser
+EXISTS = exists
+EXPANDUSER = expanduser
 
 ARGV = sys.argv
 STDOUT = sys.stdout.write
