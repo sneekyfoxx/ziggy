@@ -11,7 +11,7 @@ def ziggy_confirm() -> bool:
     """
     match (SYSTEM(), MACHINE()):
         case ('Windows', 'x86'): return True
-        case ('Windows', 'x86_64'): return True
+        case ('Windows', 'AMD64'): return True
         case ('Windows', 'aarch64'): return True
         case ('Darwin', 'x86_64'): return True
         case ('Darwin', 'aarch64'): return True
