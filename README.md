@@ -23,17 +23,9 @@ deactivate
 <summary><strong>Windows</strong></summary>
 
 ``` powershell
-pip install virtualenv
-c:\>python -m venv c:\path\to\ziggy_env    # create a virtual environment
-
-# cmd.exe
-C:\> ziggy_env\Scripts\activate.bat
-
-# powershell
-C:\> ziggy_env\bin\activate.ps1    # or PS C:\>ziggy_env\Scripts\Activate.ps1
-
-pip install -r < curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/main/requirements.txt
-deactivate
+curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/main/requirements.txt > requirements.txt
+pip install -r requirements.txt
+del requirements.txt
 ```
 </details>
 
