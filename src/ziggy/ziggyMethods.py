@@ -526,14 +526,12 @@ class ZiggyMethods:
             STDERR(f'\'{WHITE}{version}{RESET}\' {RED}isn\'t a valid Zig compiler version{RESET}\n')
             return 1
         else:
-            primary = ''
             destroyed = False
+            primary = PATH(cls.ZIG_LINK).resolve().parent.name
             for installed in PATH(cls.ZIGGY_DIR).iterdir():
                 installed = installed.name.split(cls.SEP)[-1]
-                if PATH(cls.ZIG_LINK).is_symlink():
-                    primary = PATH(cls.ZIG_LINK).resolve().parent.name
 
-                if version in installed and version != primary:
+                if version in installed and installed != primary:
                     status = RUN(f'{cls.RM_CMD} {cls.ZIGGY_DIR}{cls.SEP}{installed} {cls.DEV_NULL}', shell=True)
                     STDOUT(f'{GREEN}Destroyed{RESET} \'{WHITE}{installed}{RESET}\'\n')
                     if status.returncode == 0:
