@@ -340,12 +340,12 @@ class ZiggyMethods:
         STDOUT(f"\n   {BLUE}installed          all installed versions{RESET}")
         STDOUT(f"\n   {BLUE}available          all available versions for the current platform{RESET}\n")
         STDOUT(f"\n {PURPLE}primary{RESET}            {WHITE}show or set the primary comipler version{RESET}")
-        STDOUT(f"\n   {BLUE}VERSION            major.minor.patch (optional){RESET}\n")
+        STDOUT(f"\n   {BLUE}VERSION            major.minor.patch or 'latest' (optional){RESET}\n")
         STDOUT(f"\n {PURPLE}install{RESET}            {WHITE}install a specific compiler version{RESET}")
-        STDOUT(f"\n   {BLUE}VERSION            major.minor.patch (default 'master'){RESET}\n")
+        STDOUT(f"\n   {BLUE}VERSION            major.minor.patch or 'latest' (default 'latest'){RESET}\n")
         STDOUT(f"\n {PURPLE}upgrade{RESET}            {WHITE}upgrade the primary compiler to 'master'{RESET}\n")
         STDOUT(f"\n {PURPLE}destroy{RESET}            {WHITE}destroy the primary or a specific compiler version{RESET}")
-        STDOUT(f"\n   {BLUE}VERSION            major.minor.patch (default 'primary'){RESET}\n")
+        STDOUT(f"\n   {BLUE}VERSION            major.minor.patch or 'latest'{RESET}\n")
         STDOUT(f"\n {PURPLE}version{RESET}            {WHITE}display the current ziggy version and exit{RESET}\n")
         return 0
 
