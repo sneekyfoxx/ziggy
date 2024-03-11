@@ -47,7 +47,7 @@ class ZiggyMethods:
     MV_CMD = ''
     VERSIONS = [
             '0.1.0', '0.2.0', '0.3.0', '0.4.0', '0.5.0', '0.6.0', '0.7.0', '0.7.1',
-            '0.8.0', '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0'
+            '0.8.0', '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', 'latest'
             ]
     DEV_VERSION = '0.12.0'
     EXTENSION = ''
@@ -319,6 +319,7 @@ class ZiggyMethods:
         if version not in cls.VERSIONS:
             return 1
         elif cls.ziggy_populate() == 0:
+            version = version if version != 'latest' else cls.DEV_VERSION
             for available in cls.AVAILABLE:
                 if version in available:
                     return available
@@ -355,18 +356,18 @@ class ZiggyMethods:
             supported for the current platform and architecture.
         """
         if cls.ziggy_populate() == 1:
-            STDOUT(f"{RED}Request Failed. Couldn't populate version list.{RESET}\n")
+            STDOUT(f"{RED}Failed to populate version list.{RESET}\n")
             return 1
         else:
             if option == 'supported':
                 for version in cls.AVAILABLE:
-                    STDOUT(f'{WHITE}->{RESET} {GREEN}{version}{RESET}\n')
+                    STDOUT(f'{GREEN}->{RESET} {WHITE}{version}{RESET}\n')
                 return 0
             elif option == 'installed':
                 versions = [version.name for version in PATH(cls.ZIGGY_DIR).iterdir()]
                 for version in versions:
                     version = version.split(cls.SEP)[-1]
-                    STDOUT(f'{WHITE}->{RESET} {GREEN}{version}{RESET}\n')
+                    STDOUT(f'{GREEN}->{RESET} {WHITE}{version}{RESET}\n')
                 return 0
             else:
                 STDERR(f'{RED}Invalid option for{RESET} {GREEN}ziggy list{RESET} {RED}->{RESET} \'{WHITE}{option}{RESET}\'\n')
@@ -398,7 +399,7 @@ class ZiggyMethods:
             if version == '':
                 if zig_linked:
                     compiler_name = PATH(cls.ZIG_LINK).resolve().parent.name
-                    STDOUT(f'{GREEN}{compiler_name}{RESET}\n')
+                    STDOUT(f'\n{BLUE}Primary{RESET} -> {GREEN}{compiler_name}{RESET}\n')
                     return 0
                 else:
                     STDOUT(f'{RED}Primary Compiler Not Set{RESET}\n')
@@ -406,11 +407,12 @@ class ZiggyMethods:
             else:
                 linked = 1
                 primary = ''
+                version = version if version != 'latest' else cls.DEV_VERSION
                 if has_ziggy:
                     set_this = ''
                     for entry in SCANDIR(cls.ZIGGY_DIR):
                         if entry.is_dir(follow_symlinks=False) and version in entry.name:
-                            if version == '0.12.0' and entry.name == cls.LATEST:
+                            if version == 'latest' and entry.name == cls.LATEST:
                                 link_zig = f'{cls.LINK_CMD} {cls.ZIGGY_DIR}{cls.SEP}{entry.name}{cls.SEP}zig {cls.ZIG_LINK} {cls.DEV_NULL}'
                                 if zig_linked:
                                     RUN(f'{cls.UNLINK_CMD} {cls.ZIG_LINK} {cls.DEV_NULL}', shell=True)
@@ -421,7 +423,7 @@ class ZiggyMethods:
                                     linked = RUN(link_zig, shell=True).returncode
                                     primary = entry.name
                                     break
-                            elif version != '0.12.0':
+                            elif version != 'latest':
                                 link_zig = f'{cls.LINK_CMD} {cls.ZIGGY_DIR}{cls.SEP}{entry.name}{cls.SEP}zig {cls.ZIG_LINK} {cls.DEV_NULL}'
                                 if zig_linked:
                                     RUN(f'{cls.UNLINK_CMD} {cls.ZIG_LINK} {cls.DEV_NULL}', shell=True)
@@ -438,7 +440,7 @@ class ZiggyMethods:
                             continue
 
                     if linked == 0:
-                        STDOUT(f'{GREEN}Primary ->{RESET} \'{WHITE}{primary}{RESET}\'')
+                        STDOUT(f'{BLUE}Primary{RESET} -> \'{GREEN}{primary}{RESET}\'')
                         return linked
                     else:
                         STDERR(f'{RED}Zig compiler version{RESET} \'{WHITE}{version}{RESET}\' {RED}isn\'t installed.{RESET}\n')
@@ -448,7 +450,7 @@ class ZiggyMethods:
                     return 1
 
     @classmethod
-    def ziggy_install(cls, version: str = "0.12.0", /) -> int:
+    def ziggy_install(cls, version: str = "latest", /) -> int:
         """ Install the Zig compiler containing the specified version.
             Install the latest Zig compiler if no version is specified.
         """
@@ -461,11 +463,16 @@ class ZiggyMethods:
             return 1
         else:
             url = ''
-            if version == '0.12.0':
+            if version == 'latest':
                 url = f'{cls.DEV_URL}/{cls.LATEST}{cls.EXTENSION}'
                 for installed in SCANDIR(cls.ZIGGY_DIR):
-                    if installed.is_dir(follow_symlinks=False) and version in installed.name:
-                        RUN(f'{cls.RM_CMD} {installed.name} {cls.DEV_NULL}', shell=True)
+                    if installed.is_dir(follow_symlinks=False) and 'dev' in installed.name:
+                        if cls.LATEST == installed.name:
+                            STDOUT(f'{GREEN}Latest version already installed{RESET}\n')
+                            return 0
+                        
+                        else:
+                            RUN(f'{cls.RM_CMD} {installed.name} {cls.DEV_NULL}', shell=True)
             else:
                 for available in cls.AVAILABLE:
                     if version in available:
@@ -503,7 +510,7 @@ class ZiggyMethods:
                 version = version.name.split(cls.SEP)[-1]
                 if version == cls.LATEST:
                     installed = True
-                    STDOUT(f'{GREEN}The latest Zig compiler is already installed{RESET}\n')
+                    STDOUT(f'{GREEN}Nothing to upgrade{RESET}\n')
                     break
                 else:
                     continue
@@ -511,7 +518,7 @@ class ZiggyMethods:
             if installed:
                 return 0
             else:
-                cls.ziggy_install('0.12.0')
+                cls.ziggy_install('latest')
                 return 0
 
     @classmethod
@@ -526,6 +533,7 @@ class ZiggyMethods:
             STDERR(f'\'{WHITE}{version}{RESET}\' {RED}isn\'t a valid Zig compiler version{RESET}\n')
             return 1
         else:
+            version = version if version != 'latest' else cls.DEV_VERSION
             destroyed = False
             primary = PATH(cls.ZIG_LINK).resolve().parent.name
             for installed in PATH(cls.ZIGGY_DIR).iterdir():
