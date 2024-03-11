@@ -343,7 +343,7 @@ class ZiggyMethods:
         STDOUT(f"\n   {BLUE}VERSION            major.minor.patch or 'latest' (optional){RESET}\n")
         STDOUT(f"\n {PURPLE}install{RESET}            {WHITE}install a specific compiler version{RESET}")
         STDOUT(f"\n   {BLUE}VERSION            major.minor.patch or 'latest' (default 'latest'){RESET}\n")
-        STDOUT(f"\n {PURPLE}upgrade{RESET}            {WHITE}upgrade the primary compiler to 'master'{RESET}\n")
+        STDOUT(f"\n {PURPLE}upgrade{RESET}            {WHITE}upgrade to the 'latest' Zig compiler{RESET}\n")
         STDOUT(f"\n {PURPLE}destroy{RESET}            {WHITE}destroy the primary or a specific compiler version{RESET}")
         STDOUT(f"\n   {BLUE}VERSION            major.minor.patch or 'latest'{RESET}\n")
         STDOUT(f"\n {PURPLE}version{RESET}            {WHITE}display the current ziggy version and exit{RESET}\n")
@@ -359,7 +359,7 @@ class ZiggyMethods:
             STDOUT(f"{RED}Failed to populate version list.{RESET}\n")
             return 1
         else:
-            if option == 'supported':
+            if option == 'available':
                 for version in cls.AVAILABLE:
                     STDOUT(f'{GREEN}->{RESET} {WHITE}{version}{RESET}\n')
                 return 0
