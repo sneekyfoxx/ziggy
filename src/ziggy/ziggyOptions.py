@@ -20,7 +20,7 @@ def ziggy_options(count: int, /, *options) -> int:
         case 1:
             match options[0]:
                 case 'help': return Methods.ziggy_help()
-                case 'list': return Methods.ziggy_emitter(f"{RED}missing{RESET} '{GREEN}installed or supported{RESET}'\n")
+                case 'list': return Methods.ziggy_emitter(f"{RED}missing{RESET} '{GREEN}installed or available{RESET}'\n")
                 case 'primary': return Methods.ziggy_primary()
                 case 'install': return Methods.ziggy_install()
                 case 'upgrade': return Methods.ziggy_upgrade()
