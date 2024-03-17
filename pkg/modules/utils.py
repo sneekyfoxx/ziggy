@@ -2,7 +2,6 @@
 
 import sys
 import platform
-import asyncio
 import subprocess
 from os.path import exists, expanduser
 from pathlib import Path
@@ -19,7 +18,8 @@ except ImportError:
 
 constants = dict({
     'versions': list(),
-    'version': '',
+    'zig_url': '',
+    'archive': '',
     'dirname': '',
     'ziggy': '',
     'symlink': '',
@@ -29,6 +29,7 @@ constants = dict({
     'extract': '',
     'link': '',
     'unlink': '',
+    'mkdir': '',
     'move': '',
     'remove': ''
 })
@@ -45,34 +46,32 @@ def output(message: str, /, mode: str = 'normal', exitcode: int = 0) -> int:
             warn    - prints to standard output (yellow)
     """
     if not isinstance(message, str):
-        raise SystemExit(f"[<function output>] expected 'message: str' recieved 'message: {type(message).__name__}'")
+        raise SystemExit(f"[<function output>] expected 'message: str' got 'message: {type(message).__name__}'")
     
     if not isinstance(mode, str):
-        raise SystemExit(f"[<function output>] expected 'mode: str' recieved 'mode: {type(mode).__name__}'")
+        raise SystemExit(f"[<function output>] expected 'mode: str' got 'mode: {type(mode).__name__}'")
     
     if not isinstance(exitcode, int):
-        raise SystemExit(f"[<function output>] expected 'exitcode: int' recieved exitcode: {type(exitcode).__name__}'")
+        raise SystemExit(f"[<function output>] expected 'exitcode: int' got 'exitcode: {type(exitcode).__name__}'")
     
     if not (0 <= exitcode <= 2):
-        raise SystemExit(f"[<function output>] expected 'exitcode=(0 <= n <= 2)' recieved 'exitcode={exitcode}'")
+        raise SystemExit(f"[<function output>] expected 'exitcode=(0 <= n <= 2)' got 'exitcode={exitcode}'")
     
-    red = "\x1b[1;31m"
-    green = "\x1b[1;32m"
-    yellow = "\x1b[1;33m"
-    cyan = "\x1b[1;36m"
+    red = "\x1b[1;38;2;255;50;50m"
+    green = "\x1b[1;38;2;50;255;50m"
+    yellow = "\x1b[1;38;2;255;255;50m"
+    cyan = "\x1b[38;2;50;255;255m"
     reset = "\x1b[0m"
     
     match mode:
         case 'normal':
-            sys.stdout.write(f"{cyan}{message}{reset}\n")
-        case 'success':
-            sys.stdout.write(f"{green}{message}{reset}\n")
+            sys.stdout.write(f"{green}INFO:{reset} {cyan}{message}{reset}\n")
         case 'error':
-            sys.stderr.write(f"{red}{message}{reset}\n")
+            sys.stderr.write(f"{red}ERROR:{reset} {cyan}{message}{reset}\n")
         case 'warn':
-            sys.stdout.write(f"{yellow}{message}{reset}\n")
+            sys.stdout.write(f"{yellow}WARNING:{reset} {cyan}{message}{reset}\n")
         case _:
-            raise SystemExit(f"[<function output>] expected 'mode=normal|success|error|warn' recieved 'mode={mode}'")
+            raise SystemExit(f"[<function output>] expected 'mode=normal|error|warn' got 'mode={mode}'")
     
     return exitcode
 
@@ -176,6 +175,7 @@ def set_constants() -> bool:
                     'extract': 'unzip',
                     'link': 'mklink',
                     'unlink': 'del',
+                    'mkdir': 'mkdir',
                     'move': 'move',
                     'remove': 'rmdir'
                 })
@@ -190,6 +190,7 @@ def set_constants() -> bool:
                     'extract': 'tar xJf',
                     'link': 'sudo ln -s',
                     'unlink': 'sudo unlink',
+                    'mkdir': 'mkdir',
                     'move': 'mv',
                     'remove': 'rm -r --interactive=never'
                 })
@@ -199,6 +200,8 @@ def set_constants() -> bool:
         return True
     else:
         return False
+
+# ---------------------------------------------------------
 
 def match_version(version: str, /) -> bool:
     """ Match the given version and return the
@@ -215,13 +218,25 @@ def match_version(version: str, /) -> bool:
             output(f"'{version}' isn't a valid Zig compiler version number.\n", mode='warn', exitcode=2)
             raise SystemExit(2)
         else:
-            for ver in constants['versions']:
-                if version in ver:
-                    constants.update({'version': ver})
+            for url in constants['versions']:
+                if version in url:
+                    constants.update({'zig_url': url})
                     return True
     return False
 
-def extract_name(url: str, /) -> bool:
+def carve_archive_name(url: str, /) -> bool:
+    """ Carve out the archive name from the url. """
+    if not isinstance(url, str):
+        raise SystemExit(f"[<function carve_archive>] expected 'url: str' got 'url: {type(url).__name__}'")
+    else:
+        name = url.split('/')[-1]
+        constants.update({'archive': name})
+        if constants['archive'] != '':
+            return True
+        else:
+            return False
+
+def carve_compiler_name(url: str, /) -> bool:
     """ Extract the name from the url to use as
         the directory name.
     """
@@ -235,3 +250,86 @@ def extract_name(url: str, /) -> bool:
             return True
         else:
             return False
+
+def have_ziggy_dir() -> bool:
+    """ Ensure that the hidden '.ziggy' directory
+        exists.
+    """
+    return exists(constants['ziggy'])
+
+def have_zig_link() -> bool:
+    """ Ensure that a symlink to a Zig compiler
+        is non existant.
+    """
+    if exists(constants['symlink']):
+        return Path(constants['symlink']).is_symlink()
+    else:
+        return False
+
+def have_compiler(version: str, /) -> bool:
+    """ Check if a Zig compiler of a specified
+        version exists.
+    """
+    if not isinstance(version, str):
+        raise SystemExit(f"[<function have_compiler>] expected 'version: str' got 'version: {type(version).__name__}'")
+    else:
+        for installed in Path(constants['ziggy']).iterdir():
+            if version in installed:
+                return True
+        return False
+
+# constants must be set before this function is invoked
+# match_version() must be invoked before this function
+# carve_archive_name() must be invoked before this function
+# carve_compiler_name() must be invoked before this function
+def shell_operation(option: str, /) -> None:
+    """ Perform a shell operation based on a given option. """
+    if not isinstance(option, str):
+        raise SystemExit(f"[<function shell_operation>] expected 'option: str' got 'option: {type(option).__name__}'")
+    else:
+        archive = constants['archive']
+        dirname = constants['dirname']
+        ziggy = constants['ziggy']
+        separator = constants['separator']
+        redirect = constants['redirect']
+        extract = constants['extract']
+        link = constants['link']
+        unlink = constants['unlink']
+        mkdir = constants['mkdir']
+        move = constants['move']
+        remove = constants['remove']
+
+        match option:
+            case 'mkdir':
+                exitcode = utils.subprocess.run(f'{mkdir} {ziggy} {redirect}', shell=True).returncode
+                if exitcode != 0:
+                    utils.output(f'{ziggy} already exists', mode='warn', exitcode=2)
+                    raise SystemExit(2)
+            case 'move':
+                exitcode = utils.subprocess.run(f'{move} {archive} {ziggy} {redirect}', shell=True).returncode
+                if exitcode != 0:
+                    utils.output('Failed to move the archive.', mode='error', exitcode=1)
+                    raise SystemExit(1)
+            case 'extract':
+                exitcode = utils.subprocess.run(f'cd {ziggy} && {extract} {ziggy}{separator}{archive} {redirect}', shell=True).returncode
+                if exitcode != 0:
+                    utils.output('Failed to extract contents from archive.', mode='error', exitcode=1)
+                    raise SystemExit(1)
+            case 'remove':
+                exitcode = utils.subprocess.run(f'cd {ziggy} && {remove} {ziggy}{separator}{archive} {redirect}', shell=True).returncode
+                if exitcode != 0:
+                    utils.output('Failed to remove archive.', mode='error', exitcode=1)
+                    raise SystemExit(1)
+            case 'link':
+                exitcode = utils.subprocess.run(f'{link} {ziggy}{separator}{dirname} {symlink} {redirect}', shell=True).returncode
+                if exitcode != 0:
+                    utils.output('Failed to create symlink.', mode='error', exitcode=1)
+                    raise SystemExit(1)
+            case 'unlink':
+                exitcode = utils.subprocess.run(f'{unlink} {symlink} {redirect}', shell=True).returncode
+                if exitcode != 0:
+                    utils.output('Failed to unlink symlink.', mode='error', exitcode=1)
+                    raise SystemExit(1)
+            case _:
+                raise SystemExit(f"[<function shell_operation>] invalid option {option!r}")
+    return None
