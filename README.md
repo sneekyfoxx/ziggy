@@ -14,7 +14,7 @@ On some systems you may have to use your package manager to install the Python *
 ``` bash 
 python -m venv ziggy_env    # create a virtual environment
 source ./ziggy_env/bin/activate
-pip install -r <(curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/main/requirments.txt)
+pip install -r <(curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/main/requirements.txt)
 deactivate
 ```
 </details>
