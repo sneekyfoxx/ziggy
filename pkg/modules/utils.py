@@ -171,7 +171,7 @@ def set_constants() -> None:
                 constants.update({
                     'format': 'zip',
                     'ziggy': f'{Path.home()}{sep}.ziggy',
-                    'symlink': f'{Path.home()}{sep}zig',
+                    'symlink': f'c:{sep}Windows{sep}System32{sep}zig.exe',
                     'link': 'mklink',
                     'unlink': 'del',
                     'extension': '.zip',
@@ -327,10 +327,15 @@ def shell_operation(*, option: str = 'move', name: str = constants['dirname']) -
                 exitcode = output('Nothing to delete', mode='warn', exitcode=1)
                 raise SystemExit(exitcode)
         case 'link':
+            returncode = 1
             if Path(symlink).is_symlink():
                 subprocess.run(f'{unlink} {symlink} {redirect}', shell=True)
-
-            returncode = subprocess.run(f'{link} {ziggy}{sep}{name}{sep}zig {symlink} {redirect}', shell=True).returncode
+            
+            if platform.system().lower() == 'windows':
+                returncode = subprocess.run(f'{link} {symlink} {ziggy}{sep}{name}{sep}zig {redirect}', shell=True).returncode
+            else:
+                returncode = subprocess.run(f'{link} {ziggy}{sep}{name}{sep}zig {symlink} {redirect}', shell=True).returncode
+            
             if returncode != 0:
                 exitcode = output('Failed to create symlink', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
