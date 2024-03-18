@@ -171,7 +171,7 @@ def set_constants() -> None:
                 constants.update({
                     'format': 'zip',
                     'ziggy': f'{Path.home()}{sep}.ziggy',
-                    'symlink': f'{Path.home()}{sep}zig',
+                    'symlink': f'c:{sep}Windows{sep}System32{sep}zig',
                     'link': 'mklink',
                     'unlink': 'del',
                     'extension': '.zip',
@@ -179,7 +179,7 @@ def set_constants() -> None:
                     'extract': 'unzip',
                     'mkdir': 'mkdir',
                     'move': 'move',
-                    'remove': 'rmdir /q',
+                    'remove': 'del',
                     'rmdirs': 'rmdir /s /q'
                 })
             case ('darwin' | 'freebsd' | 'linux'):
