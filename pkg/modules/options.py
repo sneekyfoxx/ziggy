@@ -77,14 +77,16 @@ def option_fetch(version: str, /) -> None:
 def option_help() -> None:
     """ Display all options for the ziggy utility. """
     green = "\x1b[38;2;50;255;50m"
+    yellow = "\x1b[38;2;255;255;50m"
     cyan = "\x1b[38;2;50;255;255m"
     reset = "\x1b[0m"
+    utils.sys.stdout.write(f'\n{yellow}NOTE:{reset} {cyan}VERSION must take the form "major.minor.patch", eg. 0.0.0{reset}\n')
     utils.sys.stdout.write(f'\n{cyan}Options{reset}\n-------\n')
-    utils.sys.stdout.write(f' {green}activate{reset}  0.0.0   {cyan}activate version as the primary compiler{reset}\n\n')
-    utils.sys.stdout.write(f' {green}delete{reset}    0.0.0   {cyan}delete the given compiler version{reset}\n\n')
-    utils.sys.stdout.write(f' {green}fetch{reset}     0.0.0   {cyan}fetch the given compiler version from the internet{reset}\n\n')
-    utils.sys.stdout.write(f' {green}help{reset}              {cyan}display all options for ziggy{reset}\n\n')
-    utils.sys.stdout.write(f' {green}show{reset}      ARG     {cyan}display the [active], [inactive], or [supported] version(s){reset}\n')
+    utils.sys.stdout.write(f' {green}activate{reset}  VERSION   {cyan}activate version as the primary compiler{reset}\n\n')
+    utils.sys.stdout.write(f' {green}delete{reset}    VERSION   {cyan}delete the given compiler version{reset}\n\n')
+    utils.sys.stdout.write(f' {green}fetch{reset}     VERSION   {cyan}fetch the given compiler version from the internet{reset}\n\n')
+    utils.sys.stdout.write(f' {green}help{reset}                {cyan}display all options for ziggy{reset}\n\n')
+    utils.sys.stdout.write(f' {green}show{reset}      COMMAND   {cyan}display the [active], [inactive], or [supported] version(s){reset}\n')
     raise SystemExit(0)
 
 # ziggy show [active | inactive | supported]
