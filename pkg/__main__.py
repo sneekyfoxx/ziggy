@@ -10,24 +10,24 @@ def main(argc: int, argv: list[str], /) -> None:
             case 'help':
                 options.option_help()
             case 'activate':
-                exitcode = output('Not enough arguments', mode='error', exitcode=1)
+                exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
             case 'delete':
-                exitcode = output('Not enough arguments', mode='error', exitcode=1)
+                exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
             case 'fetch':
-                exitcode = output('Not enough arguments', mode='error', exitcode=1)
+                exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
             case 'show':
-                exitcode = output('Not enough arguments', mode='error', exitcode=1)
+                exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
             case _:
-                exitcode = output('Invalid option', mode='error', exitcode=1)
+                exitcode = output('Invalid option', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
     elif argc == 2:
         match argv[0]:
             case 'help':
-                exitcode = output('Too many arguments', mode='error', exitcode=1)
+                exitcode = output('Too many arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
             case 'activate':
                 options.option_activate(argv[1])
@@ -38,10 +38,10 @@ def main(argc: int, argv: list[str], /) -> None:
             case 'show':
                 options.option_show(argv[1])
             case _:
-                exitcode = output('Invalid option', mode='error', exitcode=1)
+                exitcode = output('Invalid option', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
     else:
-        exitcode = output('Too many options and arguments', mode='error', exitcode=1)
+        exitcode = output('Too many options and arguments', mode='error', exitcode=2)
         raise SystemExit(exitcode)
 
 if __name__ == '__main__':
