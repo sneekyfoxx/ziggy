@@ -95,7 +95,7 @@ def carve_supported_urls(string: str, /) -> str:
         case ('windows', 'amd64'):
             if ('windows' in string and string.endswith('.zip')) and 'x86_64-' in string:
                 return string 
-            elif 'win64-' in string:
+            elif 'win64-' in string and string.endswith('.zip'):
                 return string
         case ('windows', 'aarch64'):
             if ('windows' in string and string.endswith('.zip')) and 'aarch64-' in string: 
