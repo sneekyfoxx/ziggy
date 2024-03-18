@@ -175,7 +175,7 @@ def set_constants() -> None:
                     'link': 'mklink',
                     'unlink': 'del',
                     'extension': '.zip',
-                    'redirect': '2>null',
+                    'redirect': '2>NUL',
                     'extract': 'unzip',
                     'mkdir': 'mkdir',
                     'move': 'move',
@@ -332,7 +332,7 @@ def shell_operation(*, option: str = 'move', name: str = constants['dirname']) -
                 subprocess.run(f'{unlink} {symlink} {redirect}', shell=True)
             
             if platform.system().lower() == 'windows':
-                returncode = subprocess.run(f'{link} {symlink} {ziggy}{sep}{name}{sep}zig {redirect}', shell=True).returncode
+                returncode = subprocess.run(f'{link} {symlink} {ziggy}{sep}{name}{sep}zig.exe {redirect}', shell=True).returncode
             else:
                 returncode = subprocess.run(f'{link} {ziggy}{sep}{name}{sep}zig {symlink} {redirect}', shell=True).returncode
             
