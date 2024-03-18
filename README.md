@@ -1,10 +1,10 @@
 # ziggy: An Installer and Manager for Zig Compilers
 
-**ziggy** is a Python zip file (*.pyz/.pyw*) produced using **zipapp**. *zipapp* allows this file to be executed by embedding a header.
+**ziggy** is a dynamically linked Python execuatable binary produced using **pyinstaller**. This means that *ziggy* depends on an installation of Python (Python3 to be exact).
 
 ## Requirements
 
-**ziggy** require the ***requests*** and ***BeautifulSoup4*** packages. To install the requirements follow the steps below:
+**ziggy** requires the packages ***requests*** and ***BeautifulSoup4***. To install the requirements follow the steps below :arrow_down:
 
 <details open>
 <summary><strong>Unix</strong></summary>
