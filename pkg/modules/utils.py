@@ -171,7 +171,7 @@ def set_constants() -> None:
                 constants.update({
                     'format': 'zip',
                     'ziggy': f'{Path.home()}{sep}.ziggy',
-                    'symlink': f'c:{sep}Windows{sep}System32{sep}zig',
+                    'symlink': f'{Path.home()}{sep}zig',
                     'link': 'mklink',
                     'unlink': 'del',
                     'extension': '.zip',
