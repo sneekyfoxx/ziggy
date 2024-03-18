@@ -35,13 +35,12 @@ del requirements.txt
 <summary><strong>Options</strong></summary>
 
 ```bash
-ziggy list    supported # display the Zig compilers with support for your platform and architecture
-ziggy list    installed # display the Zig compilers installed on your system
-ziggy install VERSION   # install a specific version of the Zig compiler
-ziggy upgrade           # upgrade to the latest Zig compiler version
-ziggy primary VERSION   # set a specific (installed) Zig compiler version as the primary version
-ziggy destroy VERSION   # remove a specific (installed) Zig compiler version
-ziggy version           # display the current 'ziggy' version
+ziggy activate VERSION   # activate the given version as the primary compiler
+ziggy destroy  VERSION   # remove the given installed compiler version
+ziggy fetch    VERSION   # fetch the given supporting compiler version from the internet
+ziggy show     active    # display the current installed active compiler
+ziggy show     inactive  # display all installed inactive compilers
+ziggy show     supported # display all supporting compiler versions
 ```
 </details>
 
