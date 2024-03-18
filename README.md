@@ -36,7 +36,7 @@ del requirements.txt
 
 ```bash
 ziggy activate VERSION   # activate the given version as the primary compiler
-ziggy destroy  VERSION   # remove the given installed compiler version
+ziggy delete   VERSION   # delete the given installed compiler version
 ziggy fetch    VERSION   # fetch the given supporting compiler version from the internet
 ziggy show     active    # display the current installed active compiler
 ziggy show     inactive  # display all installed inactive compilers
