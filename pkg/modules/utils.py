@@ -1,10 +1,11 @@
 """ Utility functions for simplifying 'ziggy' operations. """
 
+import os
 import sys
 import platform
+import shutil
 import subprocess
-from os import chdir
-from os.path import exists, expanduser
+from os.path import sep
 from pathlib import Path
 
 try:
@@ -21,18 +22,19 @@ constants = dict({
     'supported': list(),
     'zig_url': '',
     'archive': '',
+    'format': '',
     'dirname': '',
     'ziggy': '',
     'symlink': '',
-    'separator': '', 
+    'link': '',
+    'unlink': '',
     'extension': '',
     'redirect': '',
     'extract': '',
-    'link': '',
-    'unlink': '',
     'mkdir': '',
     'move': '',
-    'remove': ''
+    'remove': '',
+    'rmdirs': ''
 })
 
 def output(message: str, /, mode: str = 'normal', exitcode: int = 0) -> int:
@@ -41,10 +43,9 @@ def output(message: str, /, mode: str = 'normal', exitcode: int = 0) -> int:
         The exit code must be a value in the range 0-2 (inclusive).
         
         Modes:
-            normal  - prints to standard output (cyan)
-            success - prints to standard output (green)
-            error   - prints to standard error  (red)
-            warn    - prints to standard output (yellow)
+            normal - prints to standard output (green >> prefix and cyan text)
+            warn   - prints to standard output (yellow >> prefix an cyan text)
+            error  - prints to standard error  (red >> prefix and cyan text)
     """
     if not isinstance(message, str):
         raise SystemExit(f"[<function output>] expected 'message: str' got 'message: {type(message).__name__}'")
@@ -64,15 +65,16 @@ def output(message: str, /, mode: str = 'normal', exitcode: int = 0) -> int:
     cyan = "\x1b[38;2;50;255;255m"
     reset = "\x1b[0m"
     
-    match mode:
-        case 'normal':
+    match (mode, exitcode):
+        case ('normal', 0):
             sys.stdout.write(f"{green}>>{reset} {cyan}{message}{reset}\n")
-        case 'error':
-            sys.stderr.write(f"{red}>>{reset} {cyan}{message}{reset}\n")
-        case 'warn':
+        case ('warn', 1):
             sys.stdout.write(f"{yellow}>>{reset} {cyan}{message}{reset}\n")
+        case ('error', 2):
+            sys.stderr.write(f"{red}>>{reset} {cyan}{message}{reset}\n")
         case _:
-            raise SystemExit(f"[<function output>] expected 'mode=normal|error|warn' got 'mode={mode}'")
+            errors = f"\n  'mode=normal, exitcode=0'\n  'mode=warn, exitcode=1'\n  'mode=error, errorcode=2'"
+            raise SystemExit(f"[<function output>]\n expected one of:{errors}\n\n got 'mode={mode}, exitcode={exitcode}'")
     return exitcode
 
 def carve_supported_urls(string: str, /) -> str:
@@ -167,46 +169,40 @@ def set_constants() -> None:
         match current_platform:
             case 'windows':
                 constants.update({
-                    'ziggy': f'{expanduser("~")}\\\\.ziggy',
-                    'symlink': f'{expanduser("~")}\\\\zig',
-                    'separator': '\\\\',
-                    'extension': '.zip',
-                    'redirect': '2 > null',
-                    'extract': 'unzip',
+                    'format': 'zip',
+                    'ziggy': f'{Path.home()}{sep}.ziggy',
+                    'symlink': f'{Path.home()}{sep}zig',
                     'link': 'mklink',
                     'unlink': 'del',
+                    'extension': '.zip',
+                    'redirect': '2>null',
+                    'extract': 'unzip',
                     'mkdir': 'mkdir',
                     'move': 'move',
-                    'remove': 'rmdir'
+                    'remove': 'rmdir /q',
+                    'rmdirs': 'rmdir /s /q'
                 })
-                return True
             case ('darwin' | 'freebsd' | 'linux'):
                 constants.update({
-                    'ziggy': f'{expanduser("~")}/.ziggy',
-                    'symlink': '/usr/bin/zig',
-                    'separator': '/',
-                    'extension': '.tar.xz',
-                    'redirect': '2>/dev/null',
-                    'extract': 'tar xJf',
+                    'format': 'xztar',
+                    'ziggy': f'{Path.home()}{sep}.ziggy',
+                    'symlink': f'{sep}usr{sep}bin{sep}zig',
                     'link': 'sudo ln -s',
                     'unlink': 'sudo unlink',
+                    'extension': '.tar.xz',
+                    'redirect': f'2>{sep}dev{sep}null',
+                    'extract': 'tar xJf',
                     'mkdir': 'mkdir',
                     'move': 'mv',
-                    'remove': 'rm -r --interactive=never'
+                    'remove': 'rm',
+                    'rmdirs': 'rm -r --interactive=never'
                 })
-                return True
             case _:
-                exitcode = output(f'Unsupported platform: {current_platform!r}', mode='warn', exitcode=2)
+                exitcode = output(f'Unsupported platform: {current_platform!r}', mode='warn', exitcode=1)
                 raise SystemExit(exitcode)
     else:
-        exitcode = output('Failed to fetch supported compiler versions. Check your internet connection.', mode='warn', exitcode=2)
+        exitcode = output('Failed to fetch supported compiler versions. Check your internet connection.', mode='warn', exitcode=1)
         raise SystemExit(exitcode)
-
-def create_ziggy_dir() -> None:
-    """ Create the hidden ziggy directory. """
-    if not exists(constants['ziggy']):
-        subprocess.run(f'{constants["mkdir"]} {constants["ziggy"]} {constants["redirect"]}', shell=True)
-    return None
 
 # ---------------------------------------------------------
 
@@ -222,7 +218,7 @@ def match_version(version: str, /) -> None:
             '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0'
         }
         if version not in zig_versions:
-            exitcode = output(f"'{version}' isn't a valid Zig compiler version number.\n", mode='warn', exitcode=2)
+            exitcode = output(f"'{version}' isn't a valid Zig compiler version number.\n", mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
             for url in constants['supported']:
@@ -230,7 +226,7 @@ def match_version(version: str, /) -> None:
                     constants.update({'zig_url': url})
                     break
             if constants['zig_url'] == '':
-                exitcode = output(f'{version!r} does not support your platform', mode='error', exitcode=1)
+                exitcode = output(f'{version!r} does not support your platform', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
     return None
 
@@ -251,14 +247,6 @@ def carve_compiler_name() -> None:
     if constants['dirname'] == '':
         raise SystemExit(f"[<function carve_compiler_name>] failed to carve out the compiler name.")
 
-def have_zig_link() -> bool:
-    """ Ensure that a symlink to a Zig compiler
-        is non existant.
-    """
-    if exists(constants['symlink']):
-        return Path(constants['symlink']).is_symlink()
-    else:
-        return False
 
 def have_compiler(version: str, /) -> str:
     """ Check if a Zig compiler of a specified
@@ -275,7 +263,10 @@ def have_compiler(version: str, /) -> str:
 
 def get_symlink_name() -> str:
     """ Get the name of the symlink. """
-    return Path(constants['symlink']).readlink().parent.name
+    if Path(constants['symlink']).is_symlink():
+        return Path(constants['symlink']).readlink().parent.name
+    else:
+        return ''
 
 # constants must be set before this function is invoked
 # match_version() must be invoked before this function
@@ -291,44 +282,60 @@ def shell_operation(*, option: str = 'move', name: str = constants['dirname']) -
 
     ziggy = constants['ziggy']
     symlink = constants['symlink']
-    separator = constants['separator']
-    redirect = constants['redirect']
-    extract = constants['extract']
     link = constants['link']
     unlink = constants['unlink']
+    extension = constants['extension']
+    redirect = constants['redirect']
+    extract = constants['extract']
     mkdir = constants['mkdir']
     move = constants['move']
     remove = constants['remove']
+    rmdirs = constants['rmdirs']
 
     match option:
         case 'move':
-            exitcode = subprocess.run(f'{move} .{separator}{name} {ziggy}{separator}{name} {redirect}', shell=True).returncode
-            if exitcode != 0:
-                exitcode = output('Failed to move the archive.', mode='error', exitcode=1)
+            cwd = Path.cwd()
+            if Path(f'{cwd}{sep}{name}').exists():
+                shutil.move(f'{cwd}{sep}{name}', f'{ziggy}')
+                if not Path(f'{ziggy}{sep}{name}').exists():
+                    exitcode = output('Failed to move archive', mode='error', exitcode=2)
+                    raise SystemExit(exitcode)
+            else:
+                exitcode = output(f'{name!r} file not found', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
         case 'extract':
-            exitcode = subprocess.run(f'cd {ziggy} && {extract} {ziggy}{separator}{name} {redirect}', shell=True).returncode
-            if exitcode != 0:
-                exitcode = output('Failed to extract contents from archive.', mode='error', exitcode=1)
+            if Path(f'{ziggy}{sep}{name}').exists():
+                shutil.unpack_archive(f'{ziggy}{sep}{name}', extract_dir=ziggy, format=constants['format'])
+                if not Path(f'{ziggy}{sep}{name.replace(extension, "")}').exists():
+                    exitcode = output(f'Failed to extract archive contents', mode='error', exitcode=2)
+                    raise SystemExit(exitcode)
+            else:
+                exitcode = output(f'{name!r} file not found', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
         case 'remove':
-            exitcode = subprocess.run(f'cd {ziggy} && {remove} {ziggy}{separator}{name} {redirect}', shell=True).returncode
-            if exitcode != 0:
-                exitcode = output('Failed to remove archive.', mode='error', exitcode=1)
+            returncode = 1
+            if Path(f'{ziggy}{sep}{name}').exists():
+                if Path(f'{ziggy}{sep}{name}').is_dir():
+                    returncode = subprocess.run(f'{rmdirs} {ziggy}{sep}{name} {redirect}', shell=True).returncode
+                else:
+                    returncode = subprocess.run(f'{remove} {ziggy}{sep}{name} {redirect}', shell=True).returncode
+                
+                if returncode != 0:
+                    exitcode = output(f'Failed to remove {name!r}', mode='error', exitcode=2)
+                    raise SystemExit(exitcode)
+            else:
+                exitcode = output('Nothing to delete', mode='warn', exitcode=1)
                 raise SystemExit(exitcode)
         case 'link':
-            if have_zig_link():
+            if Path(symlink).is_symlink():
                 subprocess.run(f'{unlink} {symlink} {redirect}', shell=True)
-            
-            exitcode = subprocess.run(f'{link} {ziggy}{separator}{name}{separator}zig {symlink} {redirect}', shell=True).returncode
-            if exitcode != 0:
-                exitcode = output('Failed to create symlink.', mode='error', exitcode=1)
+
+            returncode = subprocess.run(f'{link} {ziggy}{sep}{name}{sep}zig {symlink} {redirect}', shell=True).returncode
+            if returncode != 0:
+                exitcode = output('Failed to create symlink', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
         case 'unlink':
-            exitcode = subprocess.run(f'{unlink} {symlink} {redirect}', shell=True).returncode
-            if exitcode != 0:
-                exitcode = output('Failed to unlink symlink.', mode='error', exitcode=1)
-                raise SystemExit(exitcode)
+            if Path(symlink).is_symlink():
+                subprocess.run(f'{unlink} {symlink} {redirect}', shell=True)
         case _:
             raise SystemExit(f"[<function shell_operation>] invalid option {option!r}")
-    return None
