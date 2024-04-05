@@ -11,12 +11,12 @@ from pathlib import Path
 try:
     import requests
 except ModuleNotFoundError:
-    raise SystemExit(f"[{__FILE__}] failed to import 'requests'")
+    raise SystemExit(f"[{__file__}] failed to import 'requests'")
 
 try:
     from bs4 import BeautifulSoup
 except ImportError:
-    raise SystemExit(f"[{__FILE__}] failed to import 'BeautifulSoup'")
+    raise SystemExit(f"[{__file__}] failed to import 'BeautifulSoup'")
 
 constants = dict({
     'supported': list(),
