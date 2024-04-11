@@ -38,6 +38,9 @@ def option_delete(version: str, /) -> None:
         if name != '':
             if name == utils.get_symlink_name():
                 utils.shell_operation(option='unlink')
+                utils.shell_operation(option='remove', name=name)
+                exitcode = utils.output(f'Deleted {name!r}', mode='normal', exitcode=0)
+                raise SystemExit(exitcode)
             else:
                 utils.shell_operation(option='remove', name=name)
                 exitcode = utils.output(f'Deleted {name!r}', mode='normal', exitcode=0)
