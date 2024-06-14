@@ -38,7 +38,7 @@ constants = dict({
 })
 
 def output(message: str, /, mode: str = 'normal', exitcode: int = 0) -> int:
-    """ Output a specified message based on a given mode.
+    """ Output a specific message based on a given mode.
         Return an exit code if specified otherwise return 0.
         The exit code must be a value in the range 0-2 (inclusive).
         
@@ -217,7 +217,7 @@ def match_version(version: str, /) -> None:
     else:
         zig_versions = {
             '0.1.0', '0.2.0', '0.3.0', '0.4.0', '0.5.0', '0.6.0', '0.7.0', '0.7.1', '0.8.0',
-            '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0', '0.13.0'
+            '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0', '0.13.0', '0.14.0'
         }
         if version not in zig_versions:
             exitcode = output(f"'{version}' isn't a valid Zig compiler version number.\n", mode='warn', exitcode=1)
