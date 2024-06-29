@@ -45,7 +45,7 @@ def option_fetch(version: str, /) -> None:
 
         name = utils.have_compiler(version)
         if name:
-            exitcode = utils.output(f'{constants[version]!r} is already installed', mode='warn', exitcode=1)
+            exitcode = utils.output(f'{utils.constants[version]!r} is already installed', mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
             utils.get_url(version)
