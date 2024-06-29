@@ -49,7 +49,7 @@ mv ./ziggy ~/.local/bin/ziggy
 # Windows
 move .\ziggy c:\Windows\System32\ziggy
 # or
-pyinstaller -f -n ziggy .\ziggy\pkg
+pyinstaller -F -n ziggy .\ziggy\pkg\__main__.py
 move .\ziggy c:\Windows\System32\ziggy
 ```
 </details>
