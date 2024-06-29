@@ -35,12 +35,11 @@ del requirements.txt
 <summary><strong>Options</strong></summary>
 
 ```bash
-ziggy activate VERSION   # activate the given version as the primary compiler
+VERSION means **stable** or **master**
+
 ziggy delete   VERSION   # delete the given installed compiler version
 ziggy fetch    VERSION   # fetch the given supporting compiler version from the internet
-ziggy show     active    # display the current installed active compiler
-ziggy show     inactive  # display all installed inactive compilers
-ziggy show     supported # display all supporting compiler versions
+ziggy use      VERSION   # use the supplied version as the default compiler
 ```
 </details>
 
