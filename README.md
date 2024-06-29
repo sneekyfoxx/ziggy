@@ -29,6 +29,31 @@ del requirements.txt
 ```
 </details>
 
+## Do It Yourself
+
+<details>
+<summary><strong>Options</strong></summary>
+
+```bash
+# Download the Github repository
+git clone https://gihub.com/sneekyfoxx/ziggy && cd ziggy
+
+# Use Python zippapp
+python3 -m zipapp -o ziggy -p "/usr/bin/env python3" -c pkg
+
+# Move the executable zip file to a location of your choice
+
+# Linux
+mv ./ziggy ~/.local/bin/ziggy
+
+# Windows
+move .\ziggy c:\Windows\System32\ziggy
+# or
+pyinstaller -f -n ziggy .\ziggy\pkg
+move .\ziggy c:\Windows\System32\ziggy
+```
+</details>
+
 ## ziggy Usage
 
 <details>
@@ -42,4 +67,3 @@ ziggy fetch    VERSION   # fetch the given supporting compiler version from the 
 ziggy use      VERSION   # use the supplied version as the default compiler
 ```
 </details>
-
