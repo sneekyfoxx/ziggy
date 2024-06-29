@@ -1,9 +1,26 @@
 """ Utility functions for simplifying 'ziggy' operations. """
 
+# fetch:
+#    stable
+#    master
+#
+# use:
+#    stable
+#    master
+#
+# delete:
+#    stable
+#    master
+#
+# Constants:
+#    stable_version = 0.13.0
+#    unstable_version = "master"
+
 import os
 import sys
 import platform
 import shutil
+import json
 import subprocess
 from os.path import sep
 from pathlib import Path
@@ -19,8 +36,11 @@ except ImportError:
     raise SystemExit(f"[{__file__}] failed to import 'BeautifulSoup'")
 
 constants = dict({
-    'supported': list(),
+    'master': '',
+    'stable': '0.13.0',
+    'json': '',
     'zig_url': '',
+    'version': '',
     'archive': '',
     'format': '',
     'dirname': '',
@@ -77,87 +97,53 @@ def output(message: str, /, mode: str = 'normal', exitcode: int = 0) -> int:
             raise SystemExit(f"[<function output>]\n expected one of:{errors}\n\n got 'mode={mode}, exitcode={exitcode}'")
     return exitcode
 
-def carve_supported_urls(string: str, /) -> str:
+def get_json() -> None:
+    """ Get the JSON representation of compiler downloads. """
+    schema = requests.get("https://ziglang.org/download/index.json")
+
+    if schema.status_code == 200:
+        contents = json.loads(schema.content)
+        constants["json"] = contents
+        constants["master"] = contents["master"]["version"].split("-")[0]
+        constants["archive"] = contents["master"]["version"]
+    else:
+        raise SystemExit("Failed to retrieve JSON from 'https://ziglang.org'")
+
+    return None
+
+def get_url(option: str, /) -> None:
     """ Carve out the platform and architecture specific url
         from the request response.
     """
-    if not isinstance(string, str):
-        raise SystemExit(f"[<function carve_url>] expected 'string: str' got 'string: {type(string).__name__}'")
+    if not isinstance(option, str):
+        raise SystemExit(f"[<function carve_url>] expected 'option: str' got 'option: {type(option).__name__}'")
     
-    current_platform = platform.system().lower()
     current_processor = platform.machine().lower()
+    current_platform = platform.system().lower()
+
+    if current_processor == "AMD64":
+        current_processor = "x86_64"
     
-    match (current_platform, current_processor):
-        # Windows
-        case ('windows', 'x86'):
-            if ('windows' in string and string.endswith('.zip')) and ('x86-' in string or 'i386-' in string):
-                return string
-        case ('windows', 'amd64'):
-            if ('windows' in string and string.endswith('.zip')) and 'x86_64-' in string:
-                return string 
-            elif 'win64-' in string and string.endswith('.zip'):
-                return string
-        case ('windows', 'aarch64'):
-            if ('windows' in string and string.endswith('.zip')) and 'aarch64-' in string: 
-                return string
-        # Mac OS
-        case ('darwin', 'x86_64'):
-            if ('macos' in string and string.endswith('.tar.xz')) and 'x86_64-' in string:
-                return string
-        case ('darwin', 'aarch64'):
-            if ('macos' in string and string.endswith('.tar.xz')) and 'aarch64' in string:
-                return string
-        # Linux
-        case ('linux', 'x86'):
-            if ('linux' in string and string.endswith('.tar.xz')) and ('x86-' in string or 'i386' in string):
-                return string
-        case ('linux', 'x86_64'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'x86_64-' in string:
-                return string
-        case ('linux', 'aarch64'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'aarch64-' in string:
-                return string
-        case ('linux', 'armv6kz'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'armv6kz-' in string:
-                return string
-        case ('linux', 'armv7a'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'armv7a-' in string:
-                return string
-        case ('linux', 'riscv64'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'riscv64-' in string:
-                return string
-        case ('linux', 'powerpc64le'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'powerpc64le-' in string:
-                return string
-        case ('linux', 'powerpc'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'powerpc-' in string:
-                return string
-        # FreeBSD
-        case ('freebsd', 'x86_64'):
-            if ('linux' in string and string.endswith('.tar.xz')) and 'x86_64-' in string:
-                return string
-        case _:
-            return ''
+    if current_processor == "i386":
+        current_processor = "x86"
 
-def fetch_supported_versions(current_platform: str, current_processor: str, /) -> bool:
-    """ Fetch all supporting versions for the current platform
-        and architecture.
-    """
-    response = requests.get('https://ziglang.org/download')
-    if response.status_code != 200:
-        raise SystemExit(f"{response.status_code} [<function fetch_supported_versions>] request failed!")
-    else:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        response.close()
+    try:
+        get_json()
+        stable = constants["stable"]
+        key = f"{current_processor}-{current_platform}"
 
-        strings = [string.get('href') for string in soup.find_all('a')]
-        links = list(filter(None, map(carve_supported_urls, [string for string in strings])))
-        if len(links) > 0:
-            for link in links:
-                constants['supported'].append(link)
-            return True
+        if option == "stable":
+            constants["zig_url"] = constants["json"][stable][key]["tarball"]
+            constants["version"] = constants[stable]
+        elif option == "master":
+            constants["zig_url"] = constants["json"]["master"][key]["tarball"]
+            constants["version"] = constants["master"]
         else:
-            return False
+            raise SystemExit("Invalid option")
+    except KeyError:
+        raise SystemExit(f"{current_processor}-{current_platform} not supported.")
+    finally:
+        return None
 
 def set_constants() -> None:
     """ Set the values for each key in the constants dict.
@@ -165,90 +151,43 @@ def set_constants() -> None:
     """
     current_platform = platform.system().lower()
     current_processor = platform.machine().lower()
-    status = fetch_supported_versions(current_platform, current_processor)
 
-    if status:
-        match current_platform:
-            case 'windows':
-                constants.update({
-                    'format': 'zip',
-                    'ziggy': f'{Path.home()}{sep}.ziggy',
-                    'symlink': f'c:{sep}Windows{sep}System32{sep}zig.exe',
-                    'link': 'mklink',
-                    'unlink': 'del',
-                    'extension': '.zip',
-                    'redirect': '2>NUL',
-                    'extract': 'unzip',
-                    'mkdir': 'mkdir',
-                    'move': 'move',
-                    'remove': 'del',
-                    'rmdirs': 'rmdir /s /q'
-                })
-            case ('darwin' | 'freebsd' | 'linux'):
-                constants.update({
-                    'format': 'xztar',
-                    'ziggy': f'{Path.home()}{sep}.ziggy',
-                    'symlink': f'{sep}usr{sep}bin{sep}zig',
-                    'link': 'sudo ln -s',
-                    'unlink': 'sudo unlink',
-                    'extension': '.tar.xz',
-                    'redirect': f'2>{sep}dev{sep}null',
-                    'extract': 'tar xJf',
-                    'mkdir': 'mkdir',
-                    'move': 'mv',
-                    'remove': 'rm',
-                    'rmdirs': 'rm -r --interactive=never'
-                })
-            case _:
-                exitcode = output(f'Unsupported platform: {current_platform!r}', mode='warn', exitcode=1)
-                raise SystemExit(exitcode)
-    else:
-        exitcode = output('Failed to fetch supported compiler versions. Check your internet connection.', mode='warn', exitcode=1)
-        raise SystemExit(exitcode)
+    match current_platform:
+        case 'windows':
+            constants.update({
+                'format': 'zip',
+                'ziggy': f'{Path.home()}{sep}.ziggy',
+                'symlink': f'c:{sep}Windows{sep}System32{sep}zig.exe',
+                'link': 'mklink',
+                'unlink': 'del',
+                'extension': '.zip',
+                'redirect': '2>NUL',
+                'extract': 'unzip',
+                'mkdir': 'mkdir',
+                'move': 'move',
+                'remove': 'del',
+                'rmdirs': 'rmdir /s /q'
+            })
+        case ('darwin' | 'freebsd' | 'linux'):
+            constants.update({
+                'format': 'xztar',
+                'ziggy': f'{Path.home()}{sep}.ziggy',
+                'symlink': f'{sep}usr{sep}bin{sep}zig',
+                'link': 'sudo ln -s',
+                'unlink': 'sudo unlink',
+                'extension': '.tar.xz',
+                'redirect': f'2>{sep}dev{sep}null',
+                'extract': 'tar xJf',
+                'mkdir': 'mkdir',
+                'move': 'mv',
+                'remove': 'rm',
+                'rmdirs': 'rm -r --interactive=never'
+            })
+        case _:
+            exitcode = output(f'Unsupported platform: {current_platform!r}', mode='warn', exitcode=1)
+            raise SystemExit(exitcode)
 
 # ---------------------------------------------------------
-
-def match_version(version: str, /) -> None:
-    """ Match the given version and sets the
-        zig_url constant.
-    """
-    if not isinstance(version, str):
-        raise SystemExit(f"[<function match_version>] expected 'version: str' got 'version: {type(version).__name__}'")
-    else:
-        zig_versions = {
-            '0.1.0', '0.2.0', '0.3.0', '0.4.0', '0.5.0', '0.6.0', '0.7.0', '0.7.1', '0.8.0',
-            '0.8.1', '0.9.0', '0.9.1', '0.10.0', '0.10.1', '0.11.0', '0.12.0', '0.13.0', '0.14.0'
-        }
-        if version not in zig_versions:
-            exitcode = output(f"'{version}' isn't a valid Zig compiler version number.\n", mode='warn', exitcode=1)
-            raise SystemExit(exitcode)
-        else:
-            for url in constants['supported']:
-                if version in url:
-                    constants.update({'zig_url': url})
-                    break
-            if constants['zig_url'] == '':
-                exitcode = output(f'{version!r} does not support your platform', mode='error', exitcode=2)
-                raise SystemExit(exitcode)
-    return None
-
-def carve_archive_name() -> None:
-    """ Carve out the archive name from the url. """
-    name = constants['zig_url'].split('/')[-1]
-    constants.update({'archive': name})
-    if constants['archive'] == '':
-        raise SystemExit(f"[<function carve_archive_name>] failed to carve out the archive name.")
-
-def carve_compiler_name() -> None:
-    """ Extract the name from the url to use as
-        the directory name.
-    """
-    name = constants['zig_url'].split('/')[-1]
-    name = name.replace(constants['extension'], '')
-    constants.update({'dirname': name})
-    if constants['dirname'] == '':
-        raise SystemExit(f"[<function carve_compiler_name>] failed to carve out the compiler name.")
-
 
 def have_compiler(version: str, /) -> str:
     """ Check if a Zig compiler of a specified
@@ -259,7 +198,7 @@ def have_compiler(version: str, /) -> str:
         raise SystemExit(f"[<function have_compiler>] expected 'version: str' got 'version: {type(version).__name__}'")
     else:
         for installed in Path(constants['ziggy']).iterdir():
-            if version in installed.name:
+            if constants[version] in installed.name:
                 return installed.name
         return ''
 
