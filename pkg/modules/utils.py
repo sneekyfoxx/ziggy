@@ -1,21 +1,5 @@
 """ Utility functions for simplifying 'ziggy' operations. """
 
-# fetch:
-#    stable
-#    master
-#
-# use:
-#    stable
-#    master
-#
-# delete:
-#    stable
-#    master
-#
-# Constants:
-#    stable_version = 0.13.0
-#    unstable_version = "master"
-
 import os
 import sys
 import platform
