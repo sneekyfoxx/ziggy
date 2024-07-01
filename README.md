@@ -1,10 +1,8 @@
-# ziggy: An Installer and Manager for Zig Compilers
-
-**ziggy** is a dynamically linked Python execuatable binary produced using **pyinstaller**. This means that *ziggy* depends on an installation of Python (Python3 to be exact).
+# ziggy: A Zig Compiler Manager
 
 ## Requirements
 
-**ziggy** requires the packages ***requests*** and ***BeautifulSoup4***. To install the requirements follow the steps below :arrow_down:
+**ziggy** requires the package ***requests***. To install the requirements follow the steps below :arrow_down:
 
 <details open>
 <summary><strong>Unix</strong></summary>
@@ -38,17 +36,11 @@ del requirements.txt
 # Download the Github repository
 git clone https://gihub.com/sneekyfoxx/ziggy && cd ziggy
 
-# Use Python zippapp
+# Use Python zippapp on Linux
 python3 -m zipapp -o ziggy -p "/usr/bin/env python3" -c pkg
-
-# Move the executable zip file to a location of your choice
-
-# Linux
 mv ./ziggy ~/.local/bin/ziggy
 
-# Windows
-move .\ziggy c:\Windows\System32\ziggy
-# or
+# Use Python's pyinstaller module on Windows
 pyinstaller -F -n ziggy .\ziggy\pkg\__main__.py
 move .\ziggy c:\Windows\System32\ziggy
 ```
