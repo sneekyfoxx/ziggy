@@ -14,11 +14,6 @@ try:
 except ModuleNotFoundError:
     raise SystemExit(f"[{__file__}] failed to import 'requests'")
 
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    raise SystemExit(f"[{__file__}] failed to import 'BeautifulSoup'")
-
 constants = dict({
     'master': '',
     'stable': '0.13.0',

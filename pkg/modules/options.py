@@ -78,8 +78,8 @@ def option_help() -> None:
     utils.sys.stdout.write(f' {green}use{reset}       VERSION    {cyan}use version as the primary compiler{reset}\n\n')
     utils.sys.stdout.write(f'{cyan}Usage{reset}\n-----\n')
     utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}delete{reset} stable or master\n')
-    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}fetch{reset} stable or master\n\n')
-    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}use{reset} stable or master\n')
+    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}fetch{reset} stable or master\n')
+    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}use{reset} stable or master\n\n')
     raise SystemExit(0)
 
 # ziggy use version
