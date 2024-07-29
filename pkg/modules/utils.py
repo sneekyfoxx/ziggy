@@ -129,7 +129,6 @@ def set_constants() -> None:
         Values are based on the current platform and architecture.
     """
     current_platform = platform.system().lower()
-    current_processor = platform.machine().lower()
 
     match current_platform:
         case 'windows':
@@ -206,9 +205,6 @@ def shell_operation(*, option: str = 'move', name: str = constants['dirname']) -
     unlink = constants['unlink']
     extension = constants['extension']
     redirect = constants['redirect']
-    extract = constants['extract']
-    mkdir = constants['mkdir']
-    move = constants['move']
     remove = constants['remove']
     rmdirs = constants['rmdirs']
 

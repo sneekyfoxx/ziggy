@@ -48,6 +48,7 @@ def option_fetch(version: str, /) -> None:
             exitcode = utils.output(f'{utils.constants[version]!r} is already installed', mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
+            exitcode = utils.output(f"Fetching version {utils.constants[version]!r}",  mode='normal', exitcode=0)
             utils.get_url(version)
             response = utils.requests.get(utils.constants['zig_url'])
             if response.status_code == 200:
@@ -57,7 +58,7 @@ def option_fetch(version: str, /) -> None:
                 utils.shell_operation(option='move', name=utils.constants['archive'])
                 utils.shell_operation(option='extract', name=utils.constants['archive'])
                 utils.shell_operation(option='remove', name=utils.constants['archive'])
-                exitcode = utils.output(f'Install Successful', mode='normal', exitcode=0)
+                exitcode = utils.output('Install Successful', mode='normal', exitcode=0)
                 raise SystemExit(exitcode)
             else:
                 exitcode = utils.output(f'Failed to fetch version {version!r}', mode='error', exitcode=2)
