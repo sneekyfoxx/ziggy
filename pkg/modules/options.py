@@ -45,7 +45,7 @@ def option_fetch(version: str, /) -> None:
 
         name = utils.have_compiler(version)
         if name:
-            exitcode = utils.output(f'{utils.constants[version]!r} is already installed', mode='warn', exitcode=1)
+            exitcode = utils.output(f'{name!r} is already installed', mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
             exitcode = utils.output(f"Fetching version {utils.constants[version]!r}",  mode='normal', exitcode=0)
@@ -96,12 +96,12 @@ def option_use(version: str, /) -> None:
         if not utils.Path(utils.constants['ziggy']).exists():
             utils.Path(utils.constants['ziggy']).mkdir()
 
+        name = utils.have_compiler(version)
         symlink = utils.constants['symlink']
         if utils.Path(symlink).is_symlink() and utils.constants[version] in utils.get_symlink_name():
-            exitcode = utils.output(f'{version!r} is already in use.', mode='warn', exitcode=1)
+            exitcode = utils.output(f'{name!r} is already in use.', mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
-            name = utils.have_compiler(version)
             utils.shell_operation(option='link', name=name)
             exitcode = utils.output(f'Using {name!r}', mode='normal', exitcode=0)
             raise SystemExit(exitcode)
