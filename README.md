@@ -7,13 +7,17 @@
 <details open>
 <summary><strong>Unix</strong></summary>
 
-On some systems you may have to use your package manager to install the Python **virtualenv** package.
+``` bash
+# Debian
+sudo apt install python-requests
 
-``` bash 
-python -m venv ziggy_env    # create a virtual environment
-source ./ziggy_env/bin/activate
-pip install -r <(curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/main/requirements.txt)
-deactivate
+# Fedora
+sudo dnf install python-requests
+
+# Arch Linux
+sudo pacman -S python-requests
+
+# For other package managers read the documentation for the Python requests package installation
 ```
 </details>
 
@@ -21,9 +25,7 @@ deactivate
 <summary><strong>Windows</strong></summary>
 
 ``` powershell
-curl -s https://raw.githubusercontent.com/sneekyfoxx/ziggy/main/requirements.txt > requirements.txt
-pip install -r requirements.txt
-del requirements.txt
+pip install requests
 ```
 </details>
 
@@ -38,11 +40,11 @@ git clone https://gihub.com/sneekyfoxx/ziggy && cd ziggy
 
 # Use Python zippapp on Linux
 python3 -m zipapp -o ziggy -p "/usr/bin/env python3" -c pkg
-mv ./ziggy ~/.local/bin/ziggy
+mv ./ziggy location/on/PATH/ziggy
 
 # Use Python's pyinstaller module on Windows
 pyinstaller -F -n ziggy .\ziggy\pkg\__main__.py
-move .\ziggy c:\Windows\System32\ziggy
+move .\ziggy c:\Windows\System32\ziggy.exe
 ```
 </details>
 
@@ -56,6 +58,8 @@ VERSION means **stable** or **master**
 
 ziggy delete   VERSION   # delete the given installed compiler version
 ziggy fetch    VERSION   # fetch the given supporting compiler version from the internet
+ziggy help               # show help options for ziggy CLI utility
 ziggy use      VERSION   # use the supplied version as the default compiler
+ziggy upgrade  VERSION   # upgrade the given compiler to the latest version
 ```
 </details>
