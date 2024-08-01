@@ -7,15 +7,18 @@ def main(argc: int, argv: list[str], /) -> None:
         return options.option_help()
     elif argc == 1:
         match argv[0]:
-            case 'help':
-                options.option_help()
+            case 'delete':
+                exitcode = output('Not enough arguments', mode='error', exitcode=2)
+                raise SystemExit(exitcode)
             case 'fetch':
                 exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
+            case 'help':
+                options.option_help()
             case 'use':
                 exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
-            case 'delete':
+            case 'upgrade':
                 exitcode = output('Not enough arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
             case _:
@@ -23,15 +26,17 @@ def main(argc: int, argv: list[str], /) -> None:
                 raise SystemExit(exitcode)
     elif argc == 2:
         match argv[0]:
+            case 'delete':
+                options.option_delete(argv[1])
+            case 'fetch':
+                options.option_fetch(argv[1])
             case 'help':
                 exitcode = output('Too many arguments', mode='error', exitcode=2)
                 raise SystemExit(exitcode)
-            case 'fetch':
-                options.option_fetch(argv[1])
             case 'use':
                 options.option_use(argv[1])
-            case 'delete':
-                options.option_delete(argv[1])
+            case 'upgrade':
+                options.option_upgrade(argv[1])
             case _:
                 exitcode = output('Invalid option', mode='error', exitcode=2)
                 raise SystemExit(exitcode)

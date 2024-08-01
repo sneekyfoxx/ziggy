@@ -1,6 +1,5 @@
 """ Utility functions for simplifying 'ziggy' operations. """
 
-import os
 import sys
 import platform
 import shutil
@@ -83,7 +82,7 @@ def get_json() -> None:
     if schema.status_code == 200:
         contents = json.loads(schema.content)
         constants["json"] = contents
-        constants["master"] = contents["master"]["version"].split("-")[0]
+        constants["master"] = contents["master"]["version"]
         constants["archive"] = contents["master"]["version"]
     else:
         raise SystemExit("Failed to retrieve JSON from 'https://ziglang.org'")
