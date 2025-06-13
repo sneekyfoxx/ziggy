@@ -2,7 +2,7 @@
 
 ## Requirements
 
-**ziggy** requires the package ***requests***. To install the requirements follow the steps below :arrow_down:
+**ziggy** requires the ***requests*** package. To install the requirements follow the steps below :arrow_down:
 
 <details open>
 <summary><strong>Unix</strong></summary>
@@ -35,8 +35,8 @@ pip install requests
 <summary><strong>Options</strong></summary>
 
 ```bash
-# Download the Github repository
-git clone https://gihub.com/sneekyfoxx/ziggy && cd ziggy
+# Clone the Github repository
+git clone https://gihub.com/sneekyfoxx/ziggy ~/ziggy && cd ziggy
 
 # Use Python zippapp on Linux
 python3 -m zipapp -o ziggy -p "/usr/bin/env python3" -c pkg
@@ -56,10 +56,9 @@ move .\ziggy c:\Windows\System32\ziggy.exe
 ```bash
 VERSION means **stable** or **master**
 
-ziggy delete   VERSION   # delete the given installed compiler version
-ziggy fetch    VERSION   # fetch the given supporting compiler version from the internet
-ziggy help               # show help options for ziggy CLI utility
-ziggy use      VERSION   # use the supplied version as the default compiler
-ziggy upgrade  VERSION   # upgrade the given compiler to the latest version
+ziggy delete   master|stable   # delete the given installed compiler version
+ziggy fetch    master|stable   # fetch the given supporting compiler version from the internet
+ziggy help                     # show help options for ziggy CLI utility
+ziggy use      master|stable   # use the supplied version as the default compiler
 ```
 </details>
