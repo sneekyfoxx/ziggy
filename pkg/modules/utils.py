@@ -99,7 +99,7 @@ class ZiggyUtils:
                 case _:
                     self.platform_info['archive_format'] = 'xztar'
                     self.platform_info['archive_name'] = Path(f'zig-{machine}-{system}-{contents[master]["version"]}.tar.xz')
-                    self.platform_info['symlink_path'] = Path(os.path.join(Path.home(), '.local', 'bin', 'zig'))
+                    self.platform_info['symlink_path'] = Path(os.path.join(Path.home().resolve(), '.local', 'bin', 'zig'))
 
             for installed in self.ziggy_path.iterdir():
                 if 'dev' in installed.name:
@@ -108,7 +108,7 @@ class ZiggyUtils:
                     continue
 
             if self.platform_info['symlink_path'].is_symlink():
-                self.branch_default = Path(self.platform_info['symlink_path'].readlink().parent.name)
+                self.branch_default = Path(self.platform_info['symlink_path'].resolve().parent.name)
         else:
             raise SystemExit(self.output("Connection to 'https://ziglang.org' failed", mode='error', exitcode=2))
 
@@ -143,7 +143,7 @@ class ZiggyUtils:
                 case _:
                     self.platform_info['archive_format'] = 'xztar'
                     self.platform_info['archive_name'] = Path(f'zig-{machine}-{system}-{stable}.tar.xz')
-                    self.platform_info['symlink_path'] = Path(os.path.join(Path.home(), '.local', 'bin', 'zig'))
+                    self.platform_info['symlink_path'] = Path(os.path.join(Path.home().resolve(), '.local', 'bin', 'zig'))
 
             for installed in self.ziggy_path.iterdir():
                 if 'dev' not in installed.name and installed.name not in ('.', '..'):
@@ -201,7 +201,7 @@ class ZiggyUtils:
 
             case 'link':
                 self.platform_info['symlink_path'].unlink(missing_ok=True)
-                os.link(name, self.platform_info['symlink_path'])
+                self.platform_info['symlink_path'].symlink_to(name)
 
             case 'unlink':
                 self.platform_info['symlink_path'].unlink(missing_ok=True)
