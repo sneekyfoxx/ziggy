@@ -192,7 +192,7 @@ class ZiggyUtils:
                         shutil.rmtree(target)
 
                     if name and self.platform_info['archive_name'].exists():
-                        target = self.platform_info['archive_name']
+                        target = self.platform_info['archive_name'].name
                         os.remove(target)
                 except FileNotFoundError:
                     raise SystemExit(self.output(f'{target} not found', mode='error', exitcode=2))
