@@ -4,7 +4,7 @@
 setup() {
   local prefix="$1";
   local curdir="$(pwd)";
-  local py_ver="$(ls /usr/bin | grep -E '^python[0-9][.][0-9]+$' | tr '\n' ' ' | cut -d ' ' -f1)";
+  local py_ver="$(ls /usr/bin | grep -E '^python3[.][0-9]+$' | tr '\n' ' ' | cut -d ' ' -f1)";
   local pattern="^[/]";
 
   if [ ! "${prefix}" ] || [ ! -d "${prefix}" ]; then
