@@ -1,146 +1,98 @@
 from . import utils
 
-utils.get_json()
-utils.set_constants()
 
-# ziggy delete version
-def option_delete(version: str, /) -> None:
-    """ Delete the given compiler version if
-        installed.
-    """
-    if not isinstance(version, str):
-        raise SystemExit(f"[<function option_delete>] expected 'version: str' got 'version: {type(version).__name__}'")
-    else:
-        if not utils.Path(utils.constants['ziggy']).exists():
-            utils.Path(utils.constants['ziggy']).mkdir()
+class ZiggyOptions:
 
-        name = utils.have_compiler(version)
-        if name != '':
-            if name == utils.get_symlink_name():
-                utils.shell_operation(option='unlink')
-                utils.shell_operation(option='remove', name=name)
-                exitcode = utils.output(f'Deleted {name!r}', mode='normal', exitcode=0)
-                raise SystemExit(exitcode)
-            else:
-                utils.shell_operation(option='remove', name=name)
-                exitcode = utils.output(f'Deleted {name!r}', mode='normal', exitcode=0)
-                raise SystemExit(exitcode)
+    def __init__(self, /):
+        self.ziggy_utils = utils.ZiggyUtils()
+
+    def option_delete(self, branch, /):
+        """ Delete the given compiler branch if
+            installed.
+        """
+        if not isinstance(branch, str):
+            raise SystemExit(f"[<function option_delete>] expected 'branch: str' got 'branch: {type(branch).__name__}'")
         else:
-            exitcode = utils.output(f'Version {version!r} not installed', mode='warn', exitcode=1)
+            self.ziggy_utils.branch_check(branch)
+            if branch == 'master':
+                self.ziggy_utils.prefetch_master()
+            else:
+                self.ziggy_utils.prefetch_stable()
+
+            self.ziggy_utils.operation('remove')
+            exitcode = self.ziggy_utils.output(f'Removed {self.ziggy_utils.branch_upstream["dirname"]}', mode='normal', exitcode=0)
             raise SystemExit(exitcode)
 
-# ziggy fetch version
-def option_fetch(version: str, /) -> None:
-    """ Fetch the given compiler version from
-        the internet if such a version exists
-        or if it supports the currrent platform
-        and architecture and install it to the
-        system.
-    """
-    if not isinstance(version, str):
-        raise SystemExit(f"[<function option_fetch>] expected 'version: str' got 'version: {type(version).__name__}'")
-    else:
-        if not utils.Path(utils.constants['ziggy']).exists():
-            utils.Path(utils.constants['ziggy']).mkdir()
+    def option_fetch(self, branch, /):
+        """ Fetch the given compiler if the current platform and architecture are supported. """
+        if not isinstance(branch, str):
+            raise SystemExit(f"[<function option_fetch>] expected 'branch: str' got 'branch: {type(branch).__name__}'")
 
-        name = utils.have_compiler(version)
-        if name:
-            exitcode = utils.output(f'{name!r} is already installed', mode='warn', exitcode=1)
+        self.ziggy_utils.branch_check(branch)
+        if branch == 'master':
+            self.ziggy_utils.prefetch_master()
+        else:
+            self.ziggy_utils.prefetch_stable()
+
+        if self.ziggy_utils.branch_local.name == self.ziggy_utils.branch_upstream['dirname'].name:
+            exitcode = self.ziggy_utils.output(f"{self.ziggy_utils.branch_local} is already installed", mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
-            exitcode = utils.output(f"Fetching version {utils.constants[version]!r}",  mode='normal', exitcode=0)
-            utils.get_url(version)
-            response = utils.requests.get(utils.constants['zig_url'])
-            if response.status_code == 200:
-                with open(utils.constants['archive'], 'wb') as archive:
-                    archive.write(response.content)
-                    archive.close()
-                utils.shell_operation(option='move', name=utils.constants['archive'])
-                utils.shell_operation(option='extract', name=utils.constants['archive'])
-                utils.shell_operation(option='remove', name=utils.constants['archive'])
-                exitcode = utils.output('Install Successful', mode='normal', exitcode=0)
-                raise SystemExit(exitcode)
+            _ = self.ziggy_utils.output(f'Fetching {self.ziggy_utils.platform_info["archive_name"]}', mode='normal', exitcode=0)
+            archive_download = utils.requests.get(self.ziggy_utils.branch_upstream['archive_url'])
+
+            if archive_download.status_code == 200:
+                with open(self.ziggy_utils.platform_info['archive_name'].name, 'wb') as zig_archive:
+                    zig_archive.write(archive_download.content)
+                    zig_archive.close()
+
+                self.ziggy_utils.operation("unlink")
+                self.ziggy_utils.operation("remove")
+                self.ziggy_utils.operation('extract', self.ziggy_utils.platform_info['archive_name'].name)
+                self.ziggy_utils.operation('remove', self.ziggy_utils.platform_info['archive_name'].name)
+                raise SystemExit(self.ziggy_utils.output('Install Successful', mode='normal', exitcode=0))
             else:
-                exitcode = utils.output(f'Failed to fetch version {version!r}', mode='error', exitcode=2)
-                raise SystemExit(exitcode)
+                raise SystemExit(self.ziggy_utils.output('Fetch Failed', mode='error', exitcode=2))
 
-# ziggy help
-def option_help() -> None:
-    """ Display all options for the ziggy utility. """
-    green = "\x1b[38;2;50;255;50m"
-    yellow = "\x1b[38;2;255;255;50m"
-    cyan = "\x1b[38;2;50;255;255m"
-    reset = "\x1b[0m"
-    utils.sys.stdout.write(f'\n{cyan}Options              Description{reset}\n')
-    utils.sys.stdout.write('-------              -----------\n')
-    utils.sys.stdout.write(f' {green}delete{reset}    VERSION    {cyan}delete the given compiler version{reset}\n\n')
-    utils.sys.stdout.write(f' {green}fetch{reset}     VERSION    {cyan}fetch the given compiler version from the internet{reset}\n\n')
-    utils.sys.stdout.write(f' {green}help{reset}                 {cyan}display all options for ziggy{reset}\n\n')
-    utils.sys.stdout.write(f' {green}use{reset}       VERSION    {cyan}use version as the primary compiler{reset}\n\n')
-    utils.sys.stdout.write(f' {green}upgrade{reset}   VERSION    {cyan}upgrade the given compiler to the latest version{reset}\n\n')
-    utils.sys.stdout.write(f'{cyan}Usage{reset}\n-----\n')
-    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}delete{reset}   <stable | master>\n')
-    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}fetch{reset}    <stable | master>\n')
-    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}use{reset}      <stable | master>\n')
-    utils.sys.stdout.write(f'  {yellow}ziggy{reset} {green}upgrade{reset}  <stable | master>\n\n')
-    raise SystemExit(0)
+    def option_help(self, /):
+        """ Display all options for the ziggy utility. """
+        green = "\x1b[1;32m"
+        yellow = "\x1b[1;33m"
+        cyan = "\x1b[1;36m"
+        reset = "\x1b[0m"
 
-# ziggy use version
-def option_use(version: str, /) -> None:
-    """ Use the the given compiler as the
-        primary compiler version if installed.
-    """
-    if not isinstance(version, str):
-        raise SystemExit(f"[<function option_activate>] expected 'version: str' got 'version: {type(version).__name__}'")
-    else:
-        if not utils.Path(utils.constants['ziggy']).exists():
-            utils.Path(utils.constants['ziggy']).mkdir()
+        utils.sys.stdout.write(f'\n{cyan}OPTIONS{reset}\n-------\n')
+        utils.sys.stdout.write(f' {green}delete    {yellow}stable|master    {cyan}delete the given compiler{reset}\n\n')
+        utils.sys.stdout.write(f' {green}fetch     {yellow}stable|master    {cyan}fetch the given compiler{reset}\n\n')
+        utils.sys.stdout.write(f' {green}help                       {cyan}display all options for ziggy{reset}\n\n')
+        utils.sys.stdout.write(f' {green}use       {yellow}stable|master    {cyan}use branch as the primary compiler{reset}\n\n')
+        raise SystemExit(0)
 
-        name = utils.have_compiler(version)
-        symlink = utils.constants['symlink']
-        if utils.Path(symlink).is_symlink() and utils.constants[version] in utils.get_symlink_name():
-            exitcode = utils.output(f'{name!r} is already in use.', mode='warn', exitcode=1)
-            raise SystemExit(exitcode)
+    def option_use(self, branch, /):
+        """ Use the the given compiler as the
+            primary compiler branch if installed.
+        """
+        if not isinstance(branch, str):
+            raise SystemExit(f"[<function option_activate>] expected 'branch: str' got 'branch: {type(branch).__name__}'")
         else:
-            utils.shell_operation(option='link', name=name)
-            exitcode = utils.output(f'Using {name!r}', mode='normal', exitcode=0)
-            raise SystemExit(exitcode)
-
-# ziggy upgrade master
-def option_upgrade(version: str, /) -> None:
-    """ Upgrade the given compiler version to the lastest available version. """
-    if not isinstance(version, str):
-        raise SystemExit(f"[<function option_upgrade>] expected 'version: str' got 'version: {type(version).__name__}'")
-    else:
-        if not utils.Path(utils.constants['ziggy']).exists():
-            utils.Path(utils.constants['ziggy']).mkdir()
-
-        name = utils.have_compiler(version)
-        if name != '':
-            exitcode = utils.output(f"{name!r} is already installed.", mode="warn", exitcode=1)
-            raise SystemExit(exitcode)
-        elif version == "master":
-            latest = utils.constants[version].split("-dev")[0]
-            symlink = utils.constants['symlink']
-            if utils.Path(symlink).is_symlink() and latest in utils.get_symlink_name():
-                utils.shell_operation(option="unlink")
-                utils.shell_operation(option="remove", name=utils.get_symlink_name())
-                option_fetch(version)
+            self.ziggy_utils.branch_check(branch)
+            if branch == 'master':
+                self.ziggy_utils.prefetch_master()
             else:
-                option_fetch(version)
-        elif version == "stable":
-            latest = utils.constants[version]
-            symlink = utils.constants['symlink']
-            if utils.Path(symlink).is_symlink() and latest in utils.get_symlink_name():
-                utils.shell_operation(option="unlink")
-                utils.shell_operation(option="remove", name=utils.get_symlink_name())
-                option_fetch(version)
-            else:
-                option_fetch(version)
-        else:
-            exitcode = utils.output(f"{version!r} is not a valid version.", mode='error', exitcode=2)
-            raise SystemExit(exitcode)
+                self.ziggy_utils.prefetch_stable()
 
-
-
-
+            for local_branch in self.ziggy_utils.ziggy_path.iterdir():
+                if branch == 'master':
+                    if self.ziggy_utils.branch_default.name != local_branch.name and 'dev' in local_branch.name:
+                        self.ziggy_utils.operation('link', utils.os.path.join(local_branch.name, 'zig'))
+                        raise SystemExit(self.ziggy_utils.output(f'Using {local_branch.name!r}', mode='normal', exitcode=0))
+                    else:
+                        continue
+                elif branch == 'stable':
+                    if self.ziggy_utils.branch_default.name != local_branch.name and 'dev' not in local_branch.name:
+                        self.ziggy_utils.operation('link', utils.os.path.join(local_branch.name, 'zig'))
+                        raise SystemExit(self.ziggy_utils.output(f'Using {local_branch.name!r}', mode='normal', exitcode=0))
+                    else:
+                        continue
+                else:
+                    raise SystemExit(self.ziggy_utils.output(f'{local_branch.name!r} already set as default.', mode='warn', exitcode=1))
