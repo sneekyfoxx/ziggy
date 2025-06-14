@@ -201,7 +201,7 @@ class ZiggyUtils:
 
             case 'link':
                 self.platform_info['symlink_path'].unlink(missing_ok=True)
-                self.platform_info['symlink_path'].symlink_to(name)
+                self.platform_info['symlink_path'].symlink_to(os.path.join(self.ziggy_path, name))
 
             case 'unlink':
                 self.platform_info['symlink_path'].unlink(missing_ok=True)

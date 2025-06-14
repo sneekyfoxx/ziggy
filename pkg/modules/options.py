@@ -89,18 +89,16 @@ class ZiggyOptions:
                             raise SystemExit(self.ziggy_utils.output(f'Using {local_branch.name!r}', mode='normal', exitcode=0))
 
                         elif self.ziggy_utils.branch_default.name == local_branch.name and 'dev' in local_branch.name:
-                            self.ziggy_utils.operation('link', utils.os.path.join(local_branch.name, 'zig'))
                             raise SystemExit(self.ziggy_utils.output(f'{local_branch.name!r} already set as default.', mode='warn', exitcode=1))
 
                         else:
                             continue
                     case 'stable':
                         if self.ziggy_utils.branch_default.name != local_branch.name and 'dev' not in local_branch.name:
-                            self.ziggy_utils.operation('link', utils.os.path.join(local_branch.name, 'zig'))
+                            self.ziggy_utils.operation('link', utils.os.path.join(local_branch.resolve().name, 'zig'))
                             raise SystemExit(self.ziggy_utils.output(f'Using {local_branch.name!r}', mode='normal', exitcode=0))
 
                         elif self.ziggy_utils.branch_default.name == local_branch.name and 'dev' not in local_branch.name:
-                            self.ziggy_utils.operation('link', utils.os.path.join(local_branch.name, 'zig'))
                             raise SystemExit(self.ziggy_utils.output(f'{local_branch.name!r} already set as default.', mode='warn', exitcode=1))
 
                         else:
