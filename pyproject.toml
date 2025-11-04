@@ -1,0 +1,39 @@
+[project]
+name = "ziggy"
+version = "1.2"
+description = "A Zig compiler manager and installer."
+requires-python = ">= 3.12"
+dependencies = [
+    "requests>=2.32",
+]
+readme = "README.md"
+license = "MIT"
+
+[tool.pycrucible]
+entrypoint = "pkg/__main__.py"
+
+[tool.pycrucible.options]
+debug = false
+extract_to_temp = false
+delete_after_run = false
+offline_mode = false
+
+[tool.pycrucible.patterns]
+include = [
+"**/*.py",
+]
+exclude = [
+".venv/**/*",
+"**/__pycache__/**",
+".git/**/*",
+"**/*.pyc",
+"**/*.pyo",
+"**/*.pyd",
+"uv.lock",
+"setup.sh",
+".gitignore",
+".python-version"
+]
+
+[tool.pycrucible.env]
+UV_VENV_CLEAR = 1

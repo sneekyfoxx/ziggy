@@ -1,6 +1,5 @@
 """ Utility functions for simplifying 'ziggy' operations. """
 
-from io import UnsupportedOperation
 import os
 import sys
 import platform
@@ -15,12 +14,19 @@ except ModuleNotFoundError:
 
 class ZiggyUtils:
     """ Contain methods for handling fetch requests and shell operations. """
-    __slots__ = {'ziggy_path', 'branch_upstream', 'platform_info', 'branch_local', 'branch_default'}
+    __slots__ = {'ziggy_path', 'branch_version', 'archive_url', 'dirname',
+                 'archive_extension', 'archive_format', 'archive_name', 
+                 'symlink_path', 'branch_local', 'branch_default'}
 
     def __init__(self, /):
         self.ziggy_path = Path(os.path.join(Path.home(), '.ziggy'))
-        self.branch_upstream = dict({'branch_version': '', 'archive_url': '', 'dirname': Path('')})
-        self.platform_info = dict({'archive_extension': '', 'archive_format': '', 'archive_name': Path(''), 'symlink_path': Path('')})
+        self.branch_version = ''
+        self.archive_url = ''
+        self.dirname = Path('')
+        self.archive_extension = ''
+        self.archive_format = ''
+        self.archive_name = Path('')
+        self.symlink_path = Path('')
         self.branch_local = Path('')
         self.branch_default = Path('')
 
@@ -85,21 +91,21 @@ class ZiggyUtils:
                     machine = "x86_64"
 
             try:
-                self.branch_upstream['branch_version'] = contents[master]['version']
-                self.branch_upstream['archive_url'] = contents[master][f'{machine}-{system}']['tarball']
-                self.branch_upstream['dirname'] = Path(f'zig-{machine}-{system}-{contents[master]["version"]}')
+                self.branch_version = contents[master]['version']
+                self.archive_url = contents[master][f'{machine}-{system}']['tarball']
+                self.dirname = Path(f'zig-{machine}-{system}-{contents[master]["version"]}')
             except KeyError:
                 raise SystemExit(self.output(f"{machine}-{system} is currently not supported", mode='warn', exitcode=1))
 
             match system:
                 case 'windows':
-                    self.platform_info['archive_format'] = 'zip'
-                    self.platform_info['archive_name'] = Path(f'zig-{machine}-{system}-{contents[master]["version"]}.zip')
-                    self.platform_info['symlink_path'] = Path(os.path.join('c:', 'Windows32', 'zig.exe'))
+                    self.archive_format = 'zip'
+                    self.archive_name = Path(f'zig-{machine}-{system}-{contents[master]["version"]}.zip')
+                    self.symlink_path = Path(os.path.join('c:', 'Windows32', 'zig.exe'))
                 case _:
-                    self.platform_info['archive_format'] = 'xztar'
-                    self.platform_info['archive_name'] = Path(f'zig-{machine}-{system}-{contents[master]["version"]}.tar.xz')
-                    self.platform_info['symlink_path'] = Path(os.path.join(Path.home().resolve(), '.local', 'bin', 'zig'))
+                    self.archive_format = 'xztar'
+                    self.archive_name = Path(f'zig-{machine}-{system}-{contents[master]["version"]}.tar.xz')
+                    self.symlink_path = Path(os.path.join(Path.home().resolve(), '.local', 'bin', 'zig'))
 
             for installed in self.ziggy_path.iterdir():
                 if 'dev' in installed.name:
@@ -107,8 +113,8 @@ class ZiggyUtils:
                 else:
                     continue
 
-            if self.platform_info['symlink_path'].is_symlink():
-                self.branch_default = Path(self.platform_info['symlink_path'].resolve().parent.name)
+            if self.symlink_path.is_symlink():
+                self.branch_default = Path(self.symlink_path.resolve().parent.name)
         else:
             raise SystemExit(self.output("Connection to 'https://ziglang.org' failed", mode='error', exitcode=2))
 
@@ -129,21 +135,21 @@ class ZiggyUtils:
                     machine = "x86_64"
 
             try:
-                self.branch_upstream['branch_version'] = stable
-                self.branch_upstream['archive_url'] = contents[stable][f'{machine}-{system}']['tarball']
-                self.branch_upstream['dirname'] = Path(f'zig-{machine}-{system}-{stable}')
+                self.branch_version = stable
+                self.archive_url = contents[stable][f'{machine}-{system}']['tarball']
+                self.dirname = Path(f'zig-{machine}-{system}-{stable}')
             except KeyError:
                 raise SystemExit(self.output(f"{machine}-{system} is currently not supported", mode='warn', exitcode=1))
 
             match system:
                 case 'windows':
-                    self.platform_info['archive_format'] = 'zip'
-                    self.platform_info['archive_name'] = Path(f'zig-{machine}-{system}-{stable}.zip')
-                    self.platform_info['symlink_path'] = Path(os.path.join('c:', 'Windows32', 'zig.exe'))
+                    self.archive_format = 'zip'
+                    self.archive_name = Path(f'zig-{machine}-{system}-{stable}.zip')
+                    self.symlink_path = Path(os.path.join('c:', 'Windows32', 'zig.exe'))
                 case _:
-                    self.platform_info['archive_format'] = 'xztar'
-                    self.platform_info['archive_name'] = Path(f'zig-{machine}-{system}-{stable}.tar.xz')
-                    self.platform_info['symlink_path'] = Path(os.path.join(Path.home().resolve(), '.local', 'bin', 'zig'))
+                    self.archive_format = 'xztar'
+                    self.archive_name = Path(f'zig-{machine}-{system}-{stable}.tar.xz')
+                    self.symlink_path = Path(os.path.join(Path.home().resolve(), '.local', 'bin', 'zig'))
 
             for installed in self.ziggy_path.iterdir():
                 if 'dev' not in installed.name and installed.name not in ('.', '..'):
@@ -151,8 +157,8 @@ class ZiggyUtils:
                 else:
                     continue
 
-            if self.platform_info['symlink_path'].is_symlink():
-                self.branch_default = Path(self.platform_info['symlink_path'].readlink().parent.name)
+            if self.symlink_path.is_symlink():
+                self.branch_default = Path(self.symlink_path.readlink().parent.name)
         else:
             raise SystemExit(self.output("Connection to 'https://ziglang.org' failed", mode='error', exitcode=2))
 
@@ -179,20 +185,20 @@ class ZiggyUtils:
         match option:
             case 'extract':
                 try:
-                    shutil.unpack_archive(name, extract_dir='.', format=self.platform_info['archive_format'])
+                    shutil.unpack_archive(name, extract_dir='.', format=self.archive_format)
                 except FileNotFoundError:
-                    raise SystemExit(self.output(f'Extract Failed {self.platform_info["archive_name"]} not found', mode='error', exitcode=2))
+                    raise SystemExit(self.output(f'Extract Failed {self.archive_name} not found', mode='error', exitcode=2))
 
             case 'remove':
                 target = ''
                 try:
                     if not name and self.branch_local.name:
-                        self.platform_info['symlink_path'].unlink(missing_ok=True)
+                        self.symlink_path.unlink(missing_ok=True)
                         target = self.branch_local.name
                         shutil.rmtree(target)
 
-                    if name and self.platform_info['archive_name'].exists():
-                        target = self.platform_info['archive_name'].name
+                    if name and self.archive_name.exists():
+                        target = self.archive_name.name
                         os.remove(target)
                 except FileNotFoundError:
                     raise SystemExit(self.output(f'{target} not found', mode='error', exitcode=2))
@@ -200,11 +206,11 @@ class ZiggyUtils:
                     raise SystemExit(self.output(f'Failed to remove {target}', mode='error', exitcode=2))
 
             case 'link':
-                self.platform_info['symlink_path'].unlink(missing_ok=True)
-                self.platform_info['symlink_path'].symlink_to(os.path.join(self.ziggy_path, name))
+                self.symlink_path.unlink(missing_ok=True)
+                self.symlink_path.symlink_to(os.path.join(self.ziggy_path, name))
 
             case 'unlink':
-                self.platform_info['symlink_path'].unlink(missing_ok=True)
+                self.symlink_path.unlink(missing_ok=True)
 
             case _:
                 raise SystemExit(f"[<function shell_operation>] invalid option {option!r}")

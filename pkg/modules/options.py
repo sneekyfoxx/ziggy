@@ -20,7 +20,7 @@ class ZiggyOptions:
                 self.ziggy_utils.prefetch_stable()
 
             self.ziggy_utils.operation('remove')
-            exitcode = self.ziggy_utils.output(f'Removed {self.ziggy_utils.branch_upstream["dirname"]}', mode='normal', exitcode=0)
+            exitcode = self.ziggy_utils.output(f'Removed {self.ziggy_utils.dirname}', mode='normal', exitcode=0)
             raise SystemExit(exitcode)
 
     def option_fetch(self, branch, /):
@@ -34,22 +34,22 @@ class ZiggyOptions:
         else:
             self.ziggy_utils.prefetch_stable()
 
-        if self.ziggy_utils.branch_local.name == self.ziggy_utils.branch_upstream['dirname'].name:
+        if self.ziggy_utils.branch_local.name == self.ziggy_utils.dirname.name:
             exitcode = self.ziggy_utils.output(f"{self.ziggy_utils.branch_local} is already installed", mode='warn', exitcode=1)
             raise SystemExit(exitcode)
         else:
-            _ = self.ziggy_utils.output(f'Fetching {self.ziggy_utils.platform_info["archive_name"]}', mode='normal', exitcode=0)
-            archive_download = utils.requests.get(self.ziggy_utils.branch_upstream['archive_url'])
+            _ = self.ziggy_utils.output(f'Fetching {self.ziggy_utils.archive_name}', mode='normal', exitcode=0)
+            archive_download = utils.requests.get(self.ziggy_utils.archive_url)
 
             if archive_download.status_code == 200:
-                with open(self.ziggy_utils.platform_info['archive_name'].name, 'wb') as zig_archive:
+                with open(self.ziggy_utils.archive_name.name, 'wb') as zig_archive:
                     zig_archive.write(archive_download.content)
                     zig_archive.close()
 
                 self.ziggy_utils.operation("unlink")
                 self.ziggy_utils.operation("remove")
-                self.ziggy_utils.operation('extract', self.ziggy_utils.platform_info['archive_name'].name)
-                self.ziggy_utils.operation('remove', self.ziggy_utils.platform_info['archive_name'].name)
+                self.ziggy_utils.operation('extract', self.ziggy_utils.archive_name.name)
+                self.ziggy_utils.operation('remove', self.ziggy_utils.archive_name.name)
                 raise SystemExit(self.ziggy_utils.output('Install Successful', mode='normal', exitcode=0))
             else:
                 raise SystemExit(self.ziggy_utils.output('Fetch Failed', mode='error', exitcode=2))
