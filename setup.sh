@@ -4,8 +4,14 @@
 setup() {
   local prefix="$1";
   local curdir="$(pwd)";
-  local py_ver="$(ls /usr/bin | grep -E '^python3[.][0-9]+$' | tr '\n' ' ' | cut -d ' ' -f1)";
+  local py_ver=
   local pattern="^[/]";
+
+  if [[ "$(command uname -m)" == "aarch64" ]] then
+    py_ver="$(ls ${PREFIX}/bin | grep -E '^python3[.][0-9]+$' | tr '\n' ' ' | cut -d ' ' -f1)";
+  else
+    py_ver="$(ls /usr/bin | grep -E '^python3[.][0-9]+$' | tr '\n' ' ' | cut -d ' ' -f1)";
+  fi
 
   if [ ! "${prefix}" ] || [ ! -d "${prefix}" ]; then
     prefix="${HOME}/.local/bin";
